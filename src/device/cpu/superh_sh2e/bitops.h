@@ -167,4 +167,19 @@ rotate_right(uint32_t const value, unsigned const amount) {
  */
 #define POWER_OF_TWO(n) (IS_POWER_OF_TWO(n) ? __builtin_ctz(n) : -1)
 
+static ALWAYS_INLINE uint32_t
+get_upper_32_bits_from_64(uint64_t const value) {
+    return (uint32_t) (value >> 32);
+}
+
+static ALWAYS_INLINE uint32_t
+get_lower_32_bits_from_64(uint64_t const value) {
+    return (uint32_t) (value & 0xFFFFFFFF);
+}
+
+static ALWAYS_INLINE uint64_t
+get_lower_48_bits_from_64(uint64_t const value) {
+    return value & 0x0000FFFFFFFFFFFF;
+}
+
 #endif // BITOPS_H_

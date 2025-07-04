@@ -52,11 +52,9 @@
 #define AREAS_OVERLAP(base1, size1, base2, size2) \
     (((base1) >= (base2) && (base1) < (base2) + (size2)) || ((base2) >= (base1) && (base2) < (base1) + (size1)))
 
-
 #define offset_of(type, member) __builtin_offsetof(type, member)
 
 #define array_len(array) sizeof(array) / sizeof((array)[0])
-
 
 #define safe_free(ptr) \
     { \

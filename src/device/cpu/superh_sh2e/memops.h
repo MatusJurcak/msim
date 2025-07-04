@@ -12,6 +12,7 @@
 #ifndef SUPERH_SH2E_MEMOPS_H_
 #define SUPERH_SH2E_MEMOPS_H_
 
+#include "../../../arch/endianness.h"
 #include "../../../physmem.h"
 
 #include <stdint.h>

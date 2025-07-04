@@ -9,9 +9,9 @@
  *
  */
 
-#include "insn.h"
 #include "disasm.h"
 #include "exec.h"
+#include "insn.h"
 
 #include <stddef.h>
 
@@ -810,7 +810,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         static sh2e_insn_desc_t const dmulsl = {
             .assembly = "DMULS.L Rm, Rn",
             .abstract = "Rn × Rm → MACH:MACL (signed)",
-            .exec = sh2e_insn_exec_not_implemented,
+            .exec = sh2e_insn_exec_dmulsl,
             .disasm = sh2e_insn_desc_dump_nm_format,
             .cycles = 2, // 2-4 cycles
         };
@@ -820,7 +820,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         static sh2e_insn_desc_t const dmulul = {
             .assembly = "DMULU.L Rm, Rn",
             .abstract = "Rn × Rm → MACH:MACL (unsigned)",
-            .exec = sh2e_insn_exec_not_implemented,
+            .exec = sh2e_insn_exec_dmulul,
             .disasm = sh2e_insn_desc_dump_nm_format,
             .cycles = 2, // 2-4 cycles
         };
@@ -944,7 +944,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
             .disasm = sh2e_insn_desc_dump_nm_format,
             .cycles = 1,
         };
-        return &or;
+        return &or ;
 
     case ic8(0b0011, 0b1000):
         static sh2e_insn_desc_t const sub = {
@@ -988,7 +988,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
 
     case ic8(0b0110, 0b1001):
         static sh2e_insn_desc_t const swapw = {
-            .assembly = "SWAP.B Rm, Rn",
+            .assembly = "SWAP.W Rm, Rn",
             .abstract = "Rm{15:0}:Rm{31:16} → Rn",
             .exec = sh2e_insn_exec_swapw,
             .disasm = sh2e_insn_desc_dump_nm_format,
@@ -1091,8 +1091,8 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     case ic8(0b0000, 0b1111):
         static sh2e_insn_desc_t const macl = {
             .assembly = "MAC.L @Rm+, @Rn+",
-            .abstract = "[Rn]{15:0} × [Rm]{15:0} + MAC → MAC (signed), Rn + 2 → Rn, Rm + 2 → Rm",
-            .exec = sh2e_insn_exec_not_implemented,
+            .abstract = "[Rn] × [Rm] + MAC → MAC (signed), Rn + 4 → Rn, Rm + 4 → Rm",
+            .exec = sh2e_insn_exec_macl,
             .disasm = sh2e_insn_desc_dump_nm_format,
             .cycles = 3, // 2 to 4
         };
@@ -1101,8 +1101,8 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     case ic8(0b0100, 0b1111):
         static sh2e_insn_desc_t const macw = {
             .assembly = "MAC.W @Rm+, @Rn+",
-            .abstract = "[Rn] × [Rm] + MAC → MAC (signed), Rn + 4 → Rn, Rm + 4 → Rm",
-            .exec = sh2e_insn_exec_not_implemented,
+            .abstract = "[Rn]{15:0} × [Rm]{15:0} + MAC → MAC (signed), Rn + 2 → Rn, Rm + 2 → Rm",
+            .exec = sh2e_insn_exec_macw,
             .disasm = sh2e_insn_desc_dump_nm_format,
             .cycles = 3, // 2 to 3
         };
