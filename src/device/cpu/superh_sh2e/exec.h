@@ -47,6 +47,8 @@ extern sh2e_exception_t sh2e_insn_exec_cmpstr(sh2e_cpu_t * cpu, sh2e_insn_nm_t i
 extern sh2e_exception_t sh2e_insn_exec_div0s(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
 extern sh2e_exception_t sh2e_insn_exec_div0u(sh2e_cpu_t * cpu, sh2e_insn_z_t insn);
 extern sh2e_exception_t sh2e_insn_exec_div1(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
+extern sh2e_exception_t sh2e_insn_exec_dmulsl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn);
+extern sh2e_exception_t sh2e_insn_exec_dmulul(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn);
 extern sh2e_exception_t sh2e_insn_exec_dt(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
 extern sh2e_exception_t sh2e_insn_exec_extsb(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
 extern sh2e_exception_t sh2e_insn_exec_extsw(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
@@ -54,6 +56,8 @@ extern sh2e_exception_t sh2e_insn_exec_extub(sh2e_cpu_t * cpu, sh2e_insn_nm_t in
 extern sh2e_exception_t sh2e_insn_exec_extuw(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
 extern sh2e_exception_t sh2e_insn_exec_jmp(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
 extern sh2e_exception_t sh2e_insn_exec_jsr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn);
+extern sh2e_exception_t sh2e_insn_exec_macw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn);
 extern sh2e_exception_t sh2e_insn_exec_mov(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
 extern sh2e_exception_t sh2e_insn_exec_movbs(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
 extern sh2e_exception_t sh2e_insn_exec_movws(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);

@@ -9,19 +9,20 @@
  *
  */
 
+#include "bitops.h"
+#include "cpu.h"
+#include "debug.h"
+#include "decode.h"
+#include "memops.h"
+
+#include "../../../assert.h"
+
 #include <ctype.h>
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "../../../assert.h"
-#include "bitops.h"
-#include "cpu.h"
-#include "debug.h"
-#include "decode.h"
-#include "memops.h"
 
 
 /** @brief Page of cached decoded instructions. */
@@ -58,7 +59,7 @@ sh2e_cpu_insn_cache_get(ptr36_t phys, cache_item_t ** const output_item) {
     ASSERT(output_item != NULL);
 
     ptr36_t const target_page = ALIGN_DOWN(phys, FRAME_SIZE);
-    printf("looking up insn cache page 0x%08" PRIx64 "\n", target_page);
+    // printf("looking up insn cache page 0x%08" PRIx64 "\n", target_page);
 
     cache_item_t * item;
     for_each(sh2e_insn_cache, item, cache_item_t) {
@@ -68,7 +69,7 @@ sh2e_cpu_insn_cache_get(ptr36_t phys, cache_item_t ** const output_item) {
         }
     }
 
-    printf("  insn cache page not found\n");
+    // printf("  insn cache page not found\n");
     return false;
 }
 
@@ -124,7 +125,7 @@ sh2e_set_pc(sh2e_cpu_t * const restrict cpu, uint32_t const addr) {
 }
 
 
-#define address(ptr) (uintptr_t)(ptr)
+#define address(ptr) (uintptr_t) (ptr)
 
 /** Sets initial values of registers. */
 static void
@@ -163,7 +164,7 @@ sh2e_power_on_reset(sh2e_cpu_t * const restrict cpu) {
 
 static void
 sh2e_cpu_insn_cache_decode_page(sh2e_cpu_t * const restrict cpu, cache_item_t * cache_item) {
-    printf("decoding page 0x%08" PRIx64 "\n", cache_item->addr);
+    // printf("decoding page 0x%08" PRIx64 "\n", cache_item->addr);
 
     for (size_t i = 0; i < FRAME_SIZE / sizeof(sh2e_insn_t); i++) {
         ptr36_t addr = cache_item->addr + (i * sizeof(sh2e_insn_t));
@@ -188,13 +189,13 @@ sh2e_cpu_insn_cache_update(sh2e_cpu_t * const restrict cpu, cache_item_t * cache
 
 static cache_item_t *
 sh2e_cpu_insn_cache_try_add(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
-    printf("trying to add insn cache page for 0x%08" PRIx64 "\n", phys);
+    // printf("trying to add insn cache page for 0x%08" PRIx64 "\n", phys);
     frame_t * frame = physmem_find_frame(phys);
     if (frame == NULL) {
         return NULL;
     }
 
-    printf("  found frame %p\n", frame);
+    // printf("  found frame %p\n", frame);
     cache_item_t * cache_item = safe_malloc(sizeof(cache_item_t));
     cache_item_init(cache_item);
     cache_item->addr = ALIGN_DOWN(phys, FRAME_SIZE);
@@ -247,7 +248,7 @@ static sh2e_exception_t
 sh2e_cpu_execute_insn(sh2e_cpu_t * const restrict cpu) {
 
     ptr36_t insn_phys = cpu->cpu_regs.pc;
-    printf("executing insn at %p\n", (void *) insn_phys);
+    // printf("executing insn at %p\n", (void *) insn_phys);
 
     sh2e_insn_t insn;
     sh2e_exception_t fetch_ex = sh2e_cpu_fetch_insn(cpu, insn_phys, &insn);
@@ -261,10 +262,10 @@ sh2e_cpu_execute_insn(sh2e_cpu_t * const restrict cpu) {
         sh2e_cpu_dump_insn(cpu, cpu->cpu_regs.pc, insn);
     }
 
-    printf("fetching insn at 0x%08" PRIx64 "\n", insn_phys);
+    // printf("fetching insn at 0x%08" PRIx64 "\n", insn_phys);
     sh2e_insn_exec_fn_t exec_insn = sh2e_cpu_fetch_insn_func(cpu, insn_phys);
 
-    printf("calling instruction function: %p\n", exec_insn);
+    // printf("calling instruction function: %p\n", exec_insn);
     return exec_insn(cpu, insn);
 }
 

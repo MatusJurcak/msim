@@ -43,7 +43,7 @@
 #undef XLEN
 
 /* Known device types. */
-static device_type_t const * const device_types[] = {
+static device_type_t const *const device_types[] = {
     &dr4kcpu,
     &drvcpu,
     &drv64cpu,
@@ -60,10 +60,8 @@ static device_type_t const * const device_types[] = {
     &dlcd
 };
 
-
 /* List of all devices */
 list_t device_list = LIST_INITIALIZER;
-
 
 /** Search for device type by name.
  *
@@ -73,11 +71,12 @@ list_t device_list = LIST_INITIALIZER;
  * type cannot be found.
  */
 static device_type_t const *
-dev_type_by_name(char const * const type_name) {
+dev_type_by_name(char const *const type_name)
+{
     ASSERT(type_name != NULL);
 
     for (unsigned i = 0; i < array_len(device_types); i++) {
-        device_type_t const * device_type = device_types[i];
+        device_type_t const *device_type = device_types[i];
         if (strcmp(type_name, device_type->name) == 0) {
             return device_type;
         }
@@ -86,7 +85,6 @@ dev_type_by_name(char const * const type_name) {
     // Not found.
     return NULL;
 }
-
 
 /** Search for device type and allocates device structure
  *
@@ -98,7 +96,8 @@ dev_type_by_name(char const * const type_name) {
  *
  */
 device_t *
-alloc_device(char const * const type_string, char const * const device_name) {
+alloc_device(char const *const type_string, char const *const device_name)
+{
     device_type_t const *device_type = dev_type_by_name(type_string);
     if (device_type == NULL) {
         error("Unknown type for device %s: %s", device_name, type_string);
@@ -114,7 +113,7 @@ alloc_device(char const * const type_string, char const * const device_name) {
     }
 
     // Allocate and initialize the device.
-    device_t * const dev = safe_malloc_t(device_t);
+    device_t *const dev = safe_malloc_t(device_t);
 
     dev->type = device_type;
     dev->name = safe_strdup(device_name);
@@ -221,13 +220,13 @@ bool dev_next(device_t **device, device_filter_t filter)
  */
 char const *
 dev_type_by_partial_name(
-    char const * const name_prefix, uint32_t * const next_index
-) {
+        char const *const name_prefix, uint32_t *const next_index)
+{
     ASSERT(name_prefix != NULL);
 
     /* Search from the specified device */
     for (unsigned i = *next_index; i < array_len(device_types); i++) {
-        char const * const device_name = device_types[i]->name;
+        char const *const device_name = device_types[i]->name;
 
         if (prefix(name_prefix, device_name)) {
             /* Move the order to the next device */

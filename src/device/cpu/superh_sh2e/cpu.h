@@ -14,15 +14,15 @@
 
 #include "insn.h"
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <unistd.h>
-
 #include "../../../assert.h"
 #include "../../../list.h"
 #include "../../../physmem.h"
 #include "../../../utils.h"
+
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #define PACKED __attribute__((packed))
 
@@ -56,7 +56,6 @@ typedef union {
 #endif
     } PACKED;
 } float32_bits_t;
-
 
 
 typedef enum sh2e_processing_state {
@@ -295,7 +294,6 @@ typedef struct sh2e_cpu {
 
     unsigned int id;
 } sh2e_cpu_t;
-
 
 
 /** Exception codes. */

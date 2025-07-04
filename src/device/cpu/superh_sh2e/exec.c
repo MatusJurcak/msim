@@ -10,12 +10,13 @@
  */
 
 #include "bitops.h"
-#include "memops.h"
 #include "cpu.h"
 #include "debug.h"
-#include "insn.h"
 #include "exec.h"
+#include "insn.h"
+#include "memops.h"
 
+#include "../../../arch/endianness.h"
 #include "../../../assert.h"
 
 #include <ctype.h>
@@ -24,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 
 /**
@@ -784,13 +784,45 @@ sh2e_insn_exec_div1(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     uint32_t const shifted_rn = (rn << 1) | cpu->cpu_regs.sr.t;
     uint32_t const q_xor_m = cpu->cpu_regs.sr.q ^ cpu->cpu_regs.sr.m;
     uint32_t const rm = cpu->cpu_regs.general[insn.rm];
-    uint32_t const next_rn = shifted_rn + (q_xor_m == 0) ? -rm : rm;
+    uint32_t const next_rn = shifted_rn + ((q_xor_m == 0) ? -rm : rm);
     cpu->cpu_regs.general[insn.rn] = next_rn;
 
     // Determine Q and T based on carry and divider sign.
     uint32_t const carry = ((q_xor_m == 0) ? next_rn > shifted_rn : next_rn < shifted_rn) ? 1 : 0;
     cpu->cpu_regs.sr.q = carry ^ rn_sign_xor_m;
     cpu->cpu_regs.sr.t = (cpu->cpu_regs.sr.q == cpu->cpu_regs.sr.m) ? 1 : 0;
+    return SH2E_EXCEPTION_NONE;
+}
+
+// DMULS.L (Double-Length Multiply as Signed): Arithmetic Instruction
+
+sh2e_exception_t
+sh2e_insn_exec_dmulsl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
+
+    int32_t const rn = (int32_t) cpu->cpu_regs.general[insn.rn];
+    int32_t const rm = (int32_t) cpu->cpu_regs.general[insn.rm];
+
+    int64_t const result = (int64_t) rn * (int64_t) rm;
+
+    cpu->cpu_regs.mach = get_upper_32_bits_from_64(result);
+    cpu->cpu_regs.macl = get_lower_32_bits_from_64(result);
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+// DMULU.L (Double-Length Multiply as Unsigned): Arithmetic Instruction
+
+sh2e_exception_t
+sh2e_insn_exec_dmulul(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
+
+    uint32_t const rn = cpu->cpu_regs.general[insn.rn];
+    uint32_t const rm = cpu->cpu_regs.general[insn.rm];
+
+    uint64_t const result = (uint64_t) rn * (uint64_t) rm;
+
+    cpu->cpu_regs.mach = get_upper_32_bits_from_64(result);
+    cpu->cpu_regs.macl = get_lower_32_bits_from_64(result);
+
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -854,6 +886,100 @@ sh2e_insn_exec_jsr(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
     cpu->pc_next = cpu->cpu_regs.general[insn.rm];
 
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    return SH2E_EXCEPTION_NONE;
+}
+
+// MAC.L (Multiply and Accumulate Calculation Long): Arithmetic Instruction
+
+sh2e_exception_t
+sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
+    uint32_t const addrRn = cpu->cpu_regs.general[insn.rn];
+    uint32_t const addrRm = cpu->cpu_regs.general[insn.rm];
+
+    uint32_t valueRn, valueRm;
+
+    sh2e_exception_t ex1 = sh2e_cpu_read_long(cpu, addrRn, &valueRn);
+    ASSERT(ex1 == SH2E_EXCEPTION_NONE);
+    cpu->cpu_regs.general[insn.rn] += 4;
+
+    sh2e_exception_t ex2 = sh2e_cpu_read_long(cpu, addrRm, &valueRm);
+    ASSERT(ex2 == SH2E_EXCEPTION_NONE);
+    cpu->cpu_regs.general[insn.rm] += 4;
+
+    int64_t mac = (((int64_t) cpu->cpu_regs.mach) << 32) | (int64_t) cpu->cpu_regs.macl;
+
+    int64_t const product = (int64_t) valueRn * (int64_t) valueRm;
+
+    mac += product;
+
+    // When bit S is set to 1, addition to the MAC register is a saturation operation of 48 bits starting from the LSB
+    if (cpu->cpu_regs.sr.s) {
+        uint64_t const lower_48 = get_lower_48_bits_from_64(mac);
+
+        bool negative = (lower_48 & ((uint64_t) 1 << 47)) != 0;
+
+        if (negative) {
+            mac = lower_48 | 0xFFFF000000000000;
+        } else {
+            mac = lower_48 & 0x0000FFFFFFFFFFFF;
+        }
+    }
+
+    cpu->cpu_regs.mach = get_upper_32_bits_from_64(mac);
+    cpu->cpu_regs.macl = get_lower_32_bits_from_64(mac);
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+
+// MAC.W (Multiply and Accumulate Calculation Word): Arithmetic Instruction
+
+sh2e_exception_t
+sh2e_insn_exec_macw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
+    uint32_t const addrRn = cpu->cpu_regs.general[insn.rn];
+    uint32_t const addrRm = cpu->cpu_regs.general[insn.rm];
+
+    uint32_t valueRn, valueRm;
+
+    sh2e_exception_t ex1 = sh2e_cpu_reads_word(cpu, addrRn, &valueRn);
+    ASSERT(ex1 == SH2E_EXCEPTION_NONE);
+    cpu->cpu_regs.general[insn.rn] += 2;
+
+    sh2e_exception_t ex2 = sh2e_cpu_reads_word(cpu, addrRm, &valueRm);
+    ASSERT(ex2 == SH2E_EXCEPTION_NONE);
+    cpu->cpu_regs.general[insn.rm] += 2;
+
+    int32_t const product = (int32_t) valueRn * (int32_t) valueRm;
+
+    // If the S bit is 0, a 16 × 16 + 64 → 64-bit multiply-and-accumulate operation is performed, and the
+    // 64-bit result is stored in the linked MACH and MACL registers.
+
+    // If the S bit is 1, a 16 × 16 + 32 → 32-bit multiply-and-accumulate operation is performed, and the
+    // addition to the MAC register contents is a saturation operation. In a saturation operation, only the
+    // MACL register is valid, and the result range is limited to H'80000000 (minimum value) to
+    // H'7FFFFFFF (maximum value). If overflow occurs, the LSB of the MACH register is set to 1.
+    // H'80000000 (minimum value) is stored in the MACL register if the result overflows in the
+    // negative direction, and H'7FFFFFFF (maximum value) is stored if the result overflows in the
+    // positive direction.
+
+    if (cpu->cpu_regs.sr.s) {
+        int64_t val = (int32_t) cpu->cpu_regs.macl + (int64_t) product;
+
+        if (val > 0x7FFFFFFF) {
+            val = 0x7FFFFFFF;
+            cpu->cpu_regs.mach |= 1;
+        } else if (val < (int64_t) 0x80000000) {
+            val = 0x80000000;
+            cpu->cpu_regs.mach |= 1;
+        }
+        cpu->cpu_regs.macl = (uint32_t) val;
+    } else {
+        int64_t const mac = ((((int64_t) cpu->cpu_regs.mach) << 32) | (int64_t) cpu->cpu_regs.macl) + (int64_t) product;
+
+        cpu->cpu_regs.mach = get_upper_32_bits_from_64(mac);
+        cpu->cpu_regs.macl = get_lower_32_bits_from_64(mac);
+    }
+
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -1662,11 +1788,11 @@ sh2e_insn_exec_fadd(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
 
     float32_t result = frn + frm;
     if (isnan(result) && (
-        // Any of FRn and FRm is a signaling NaN.
-        __is_snan(frn) || __is_snan(frm) ||
-        // Both FRn and FRm are infinite but with different sign.
-        (isinf(frn) * isinf(frm) < 0)
-    )) {
+            // Any of FRn and FRm is a signaling NaN.
+            __is_snan(frn) || __is_snan(frm) ||
+            // Both FRn and FRm are infinite but with different sign.
+            (isinf(frn) * isinf(frm) < 0)
+        )) {
         // FADD special cases (REJ09B0316-0200, page 173).
         sh2e_cpu_set_cv_fv(cpu);
         if (cpu->fpu_regs.fpscr.ev) {
@@ -1691,9 +1817,9 @@ sh2e_insn_exec_fcmpeq(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn
 
     bool const result = frn == frm;
     if (!result && (
-        // Any of FRn and FRm is a signaling NaN.
-        __is_snan(frn) || __is_snan(frm)
-    )) {
+            // Any of FRn and FRm is a signaling NaN.
+            __is_snan(frn) || __is_snan(frm)
+        )) {
         // FCMP/EQ special cases (REJ09B0316-0200, page 177).
         sh2e_cpu_set_cv_fv(cpu);
         if (cpu->fpu_regs.fpscr.ev) {
@@ -1713,9 +1839,9 @@ sh2e_insn_exec_fcmpgt(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn
 
     uint32_t const result = isgreater(frn, frm);
     if (result == 0 && (
-        // Any of FRn and FRm is a NaN.
-        isunordered(frn, frm) == 1
-    )) {
+            // Any of FRn and FRm is a NaN.
+            isunordered(frn, frm) == 1
+        )) {
         // FCMP/GT special cases (REJ09B0316-0200, page 177).
         sh2e_cpu_set_cv_fv(cpu);
         if (cpu->fpu_regs.fpscr.ev) {
@@ -1874,12 +2000,11 @@ sh2e_insn_exec_fmul(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     // TODO Handle exceptions.
     float32_t result = frn * frm;
     if (isnan(result) && (
-        // Any of FRn and FRm is a signaling NaN.
-        __is_snan(frn) || __is_snan(frm) ||
-        // Either of FRn or FRm is infinity and the other is zero.
-        (isinf(frn) && fpclassify(frm) == FP_ZERO) ||
-        (fpclassify(frn) == FP_ZERO && isinf(frm))
-    )) {
+            // Any of FRn and FRm is a signaling NaN.
+            __is_snan(frn) || __is_snan(frm) ||
+            // Either of FRn or FRm is infinity and the other is zero.
+            (isinf(frn) && fpclassify(frm) == FP_ZERO) || (fpclassify(frn) == FP_ZERO && isinf(frm))
+        )) {
         // FMUL special cases (REJ09B0316-0200, page 193).
         sh2e_cpu_set_cv_fv(cpu);
         if (cpu->fpu_regs.fpscr.ev) {
@@ -1933,11 +2058,11 @@ sh2e_insn_exec_fsub(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
 
     float32_t result = frn - frm;
     if (isnan(result) && (
-        // Any of FRn and FRm is a signaling NaN.
-        __is_snan(frn) || __is_snan(frm) ||
-        // Both FRn and FRm are infinite with the same sign.
-        (isinf(frn) * isinf(frm) == 1)
-    )) {
+            // Any of FRn and FRm is a signaling NaN.
+            __is_snan(frn) || __is_snan(frm) ||
+            // Both FRn and FRm are infinite with the same sign.
+            (isinf(frn) * isinf(frm) == 1)
+        )) {
         // FSUB special cases (REJ09B0316-0200, page 197).
         sh2e_cpu_set_cv_fv(cpu);
         if (cpu->fpu_regs.fpscr.ev) {

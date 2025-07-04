@@ -15,15 +15,14 @@
 #include "disasm.h"
 
 #include <ctype.h>
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
 
 
 /** Register names. */
 
 extern char const * const * sh2e_cpu_general_reg_names;
 extern char const * const * sh2e_fpu_general_reg_names;
-
 
 
 /****************************************************************************
