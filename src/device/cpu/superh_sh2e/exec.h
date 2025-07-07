@@ -15,6 +15,10 @@
 #include "cpu.h"
 #include "insn.h"
 
+// (Figure 4.2 Floating-Point Status/Control Register) Mask for LDS instructions that enables only the correct bits
+#define LDS_FPSCR_MASK 0x00018C60
+#define LDC_SR_MASK 0x0FFF0FFF
+
 
 // Instruction execution functions
 
@@ -56,6 +60,22 @@ extern sh2e_exception_t sh2e_insn_exec_extub(sh2e_cpu_t * cpu, sh2e_insn_nm_t in
 extern sh2e_exception_t sh2e_insn_exec_extuw(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);
 extern sh2e_exception_t sh2e_insn_exec_jmp(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
 extern sh2e_exception_t sh2e_insn_exec_jsr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldc_sr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldc_gbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldc_vbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldcl_sr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldcl_gbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldcl_vbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_lds_mach(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_lds_macl(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_lds_pr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_lds_fpscr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_lds_fpul(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldsl_mach(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldsl_macl(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldsl_pr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldsl_fpscr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
+extern sh2e_exception_t sh2e_insn_exec_ldsl_fpul(sh2e_cpu_t * cpu, sh2e_insn_m_t insn);
 extern sh2e_exception_t sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn);
 extern sh2e_exception_t sh2e_insn_exec_macw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn);
 extern sh2e_exception_t sh2e_insn_exec_mov(sh2e_cpu_t * cpu, sh2e_insn_nm_t insn);

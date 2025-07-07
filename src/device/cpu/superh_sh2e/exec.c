@@ -889,6 +889,180 @@ sh2e_insn_exec_jsr(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
     return SH2E_EXCEPTION_NONE;
 }
 
+// LDC (Load to Control Register): System Control Instruction (Class: Interrupt Disabled Instruction)
+
+sh2e_exception_t
+sh2e_insn_exec_ldc_sr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    sh2e_cpu_set_sr(cpu, (cpu->cpu_regs.general[insn.rm] & LDC_SR_MASK));
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldc_gbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->cpu_regs.gbr = cpu->cpu_regs.general[insn.rm];
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldc_vbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->cpu_regs.vbr = cpu->cpu_regs.general[insn.rm];
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldcl_sr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+
+    sh2e_exception_t cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    sh2e_cpu_set_sr(cpu, (value & LDC_SR_MASK));
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldcl_gbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->cpu_regs.gbr = value;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldcl_vbr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->cpu_regs.vbr = value;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_lds_mach(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->cpu_regs.mach = cpu->cpu_regs.general[insn.rm];
+    return SH2E_EXCEPTION_NONE;
+}
+
+
+sh2e_exception_t
+sh2e_insn_exec_lds_macl(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->cpu_regs.macl = cpu->cpu_regs.general[insn.rm];
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_lds_pr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->cpu_regs.pr = cpu->cpu_regs.general[insn.rm];
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_lds_fpscr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->fpu_regs.fpscr.value = cpu->cpu_regs.general[insn.rm] & LDS_FPSCR_MASK;
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_lds_fpul(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    cpu->fpu_regs.fpul.ivalue = cpu->cpu_regs.general[insn.rm];
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldsl_mach(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->cpu_regs.mach = value;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldsl_macl(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->cpu_regs.macl = value;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldsl_pr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->cpu_regs.pr = value;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldsl_fpscr(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->fpu_regs.fpscr.value = value & LDS_FPSCR_MASK;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_ldsl_fpul(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
+    uint32_t value;
+    sh2e_exception_t const cpu_read_ex = sh2e_cpu_read_long(cpu, cpu->cpu_regs.general[insn.rm], &value);
+
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu->cpu_regs.general[insn.rm] += 4;
+    cpu->fpu_regs.fpul.ivalue = value;
+
+    return SH2E_EXCEPTION_NONE;
+}
+
+
 // MAC.L (Multiply and Accumulate Calculation Long): Arithmetic Instruction
 
 sh2e_exception_t
@@ -897,13 +1071,19 @@ sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     uint32_t const addrRm = cpu->cpu_regs.general[insn.rm];
 
     uint32_t valueRn, valueRm;
+    sh2e_exception_t cpu_read_ex;
 
-    sh2e_exception_t ex1 = sh2e_cpu_read_long(cpu, addrRn, &valueRn);
-    ASSERT(ex1 == SH2E_EXCEPTION_NONE);
+    cpu_read_ex = sh2e_cpu_read_long(cpu, addrRn, &valueRn);
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu_read_ex = sh2e_cpu_read_long(cpu, addrRm, &valueRm);
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
     cpu->cpu_regs.general[insn.rn] += 4;
-
-    sh2e_exception_t ex2 = sh2e_cpu_read_long(cpu, addrRm, &valueRm);
-    ASSERT(ex2 == SH2E_EXCEPTION_NONE);
     cpu->cpu_regs.general[insn.rm] += 4;
 
     int64_t mac = (((int64_t) cpu->cpu_regs.mach) << 32) | (int64_t) cpu->cpu_regs.macl;
@@ -931,7 +1111,6 @@ sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     return SH2E_EXCEPTION_NONE;
 }
 
-
 // MAC.W (Multiply and Accumulate Calculation Word): Arithmetic Instruction
 
 sh2e_exception_t
@@ -940,13 +1119,19 @@ sh2e_insn_exec_macw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     uint32_t const addrRm = cpu->cpu_regs.general[insn.rm];
 
     uint32_t valueRn, valueRm;
+    sh2e_exception_t cpu_read_ex;
 
-    sh2e_exception_t ex1 = sh2e_cpu_reads_word(cpu, addrRn, &valueRn);
-    ASSERT(ex1 == SH2E_EXCEPTION_NONE);
+    cpu_read_ex = sh2e_cpu_reads_word(cpu, addrRn, &valueRn);
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
+    cpu_read_ex = sh2e_cpu_reads_word(cpu, addrRm, &valueRm);
+    if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
+        return cpu_read_ex;
+    }
+
     cpu->cpu_regs.general[insn.rn] += 2;
-
-    sh2e_exception_t ex2 = sh2e_cpu_reads_word(cpu, addrRm, &valueRm);
-    ASSERT(ex2 == SH2E_EXCEPTION_NONE);
     cpu->cpu_regs.general[insn.rm] += 2;
 
     int32_t const product = (int32_t) valueRn * (int32_t) valueRm;
