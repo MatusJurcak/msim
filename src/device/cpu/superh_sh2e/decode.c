@@ -15,6 +15,11 @@
 
 #include <stddef.h>
 
+static sh2e_insn_desc_t const illegal = {
+    .assembly = "<ILLEGAL>",
+    .exec = sh2e_insn_exec_illegal,
+    .cycles = 1,
+};
 
 /****************************************************************************
  * SH-2E `0-format` decoding
@@ -2138,6 +2143,42 @@ sh2e_insn_decode_ni_format(sh2e_insn_ni_t const insn) {
 
 
 /****************************************************************************
+ * SH-2E `MSIM`-format decoding
+ ****************************************************************************/
+
+static sh2e_insn_desc_t const *
+sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
+    switch (insn.ic) {
+
+    // MSIM specific instruction to halt the machine
+    // .word 0x8200
+    case 0b1000001000000000: {
+        static sh2e_insn_desc_t const halt = {
+            .assembly = "HALT",
+            .abstract = "(halt machine)",
+            .exec = sh2e_insn_exec_halt,
+            .disasm = sh2e_insn_desc_dump_z_format,
+            .cycles = 1,
+        };
+        return machine_specific_instructions ? &halt : &illegal;
+    }
+
+
+    // .word 0x8201
+    case 0b1000001000000001: {
+        static sh2e_insn_desc_t const cpu_reg_dump = {
+            .assembly = "CPU REG DUMP",
+            .abstract = "(cpu registers dump)",
+            .exec = sh2e_insn_exec_cpu_reg_dump,
+            .disasm = sh2e_insn_desc_dump_z_format,
+            .cycles = 1,
+        };
+        return &cpu_reg_dump;
+    }
+    }
+}
+
+/****************************************************************************
  * SH-2E instruction decoding
  ****************************************************************************/
 
@@ -2209,6 +2250,12 @@ sh2e_insn_decode(sh2e_insn_t const insn) {
         }
 
         desc = sh2e_insn_decode_i_format(insn.i_form);
+
+        if (desc != NULL) {
+            return desc;
+        }
+
+        desc = sh2e_insn_decode_msim_format(insn.z_form);
         break;
 
     case 0b1001: // nd8_format
@@ -2244,14 +2291,6 @@ sh2e_insn_decode(sh2e_insn_t const insn) {
         desc = sh2e_insn_decode_nm_format_fpu(insn.nm_form);
         break;
     }
-
-    //
-
-    static sh2e_insn_desc_t const illegal = {
-        .assembly = "<ILLEGAL>",
-        .exec = sh2e_insn_exec_illegal,
-        .cycles = 1,
-    };
 
     return (desc != NULL) ? desc : &illegal;
 }

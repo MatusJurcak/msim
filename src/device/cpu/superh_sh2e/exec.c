@@ -298,7 +298,7 @@ sh2e_insn_movi(
     ASSERT(0 <= POWER_OF_TWO(scale) && POWER_OF_TWO(scale) <= 2 && "invalid `scale` value");
 
     uint32_t const disp = zero_extend_8_32(insn.d8);
-    uint32_t const addr = (cpu->cpu_regs.pc & (~(scale - 1))) + (disp * scale);
+    uint32_t const addr = ((cpu->cpu_regs.pc) & (~(scale - 1))) + 4 + (disp * scale);
 
     uint32_t mem_value;
     sh2e_exception_t const cpu_read_ex = sh2e_cpu_read(cpu, addr, &mem_value);
@@ -2298,6 +2298,26 @@ sh2e_insn_exec_sts_fpu(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn
 sh2e_exception_t
 sh2e_insn_exec_stsm_fpu(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn) {
     return sh2e_insn_stcsrm(cpu, insn, cpu->fpu_regs.system);
+}
+
+sh2e_exception_t
+sh2e_insn_exec_halt(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
+    ASSERT(cpu != NULL);
+
+    alert("EHALT: Machine halt");
+
+    machine_halt = true;
+    return SH2E_EXCEPTION_NONE;
+}
+
+sh2e_exception_t
+sh2e_insn_exec_cpu_reg_dump(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
+    ASSERT(cpu != NULL);
+
+    alert("EDUMP_CPU: Dumping cpu registers");
+
+    sh2e_cpu_dump_cpu_regs(cpu);
+    return SH2E_EXCEPTION_NONE;
 }
 
 //
