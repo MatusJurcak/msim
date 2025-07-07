@@ -2320,6 +2320,15 @@ sh2e_insn_exec_cpu_reg_dump(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const
     return SH2E_EXCEPTION_NONE;
 }
 
+sh2e_exception_t
+sh2e_insn_exec_fpu_reg_dump(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
+
+    ASSERT(cpu != NULL);
+    alert("EDUMP_FPU: Dumping fpu registers");
+
+    sh2e_cpu_dump_fpu_regs(cpu);
+    return SH2E_EXCEPTION_NONE;
+}
 //
 
 sh2e_exception_t

@@ -190,5 +190,6 @@ extern sh2e_exception_t sh2e_insn_exec_not_implemented(sh2e_cpu_t * cpu, sh2e_in
 
 extern sh2e_exception_t sh2e_insn_exec_halt(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn);
 extern sh2e_exception_t sh2e_insn_exec_cpu_reg_dump(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn);
+extern sh2e_exception_t sh2e_insn_exec_fpu_reg_dump(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn);
 
 #endif // SUPERH_SH2E_EXEC_H_
