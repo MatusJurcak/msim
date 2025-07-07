@@ -182,6 +182,7 @@ typedef union sh2e_fpu_scr {
     uint32_t value;
 
     PACKED struct {
+#ifdef WORDS_BIGENDIAN
         uint32_t _rf0 : 13; /** Reserved field 0 (bits 31 to 19). Wired to 0. */
 
         uint32_t dn : 1; /** Denormalized bit. Wired to 1 on SH-2E. */
@@ -207,6 +208,33 @@ typedef union sh2e_fpu_scr {
         uint32_t fi : 1; /** Inexact exception flag. Wired to 0 on SH-2E. */
 
         uint32_t rm : 2; /** Rounding Mode. Wired to 0b01 (rounding to zero) on SH-2E. */
+#else
+        uint32_t rm : 2; /** Rounding Mode. Wired to 0b01 (rounding to zero) on SH-2E. */
+
+        uint32_t fi : 1; /** Inexact exception flag. Wired to 0 on SH-2E. */
+        uint32_t fu : 1; /** Underflow exception flag. Wired to 0 on SH-2E. */
+        uint32_t fo : 1; /** Overflow exception flag. Wired to 0 on SH-2E. */
+        uint32_t fz : 1; /** Division-by-zero flat. */
+        uint32_t fv : 1; /** Invalid operation flag. */
+
+        uint32_t ei : 1; /** Inexact exception enable. Wired to 0 on SH-2E. */
+        uint32_t eu : 1; /** Underflow exception enable. Wired to 0 on SH-2E. */
+        uint32_t eo : 1; /** Overflow exception enable. Wired to 0 on SH-2E. */
+        uint32_t ez : 1; /** Division-by-zero exception enable. */
+        uint32_t ev : 1; /** Invalid operation exception enable. */
+
+        uint32_t ci : 1; /** Inexact cause bit. Wired to 0 on SH-2E. */
+        uint32_t cu : 1; /** Underflow cause bit. Wired to 0 on SH-2E. */
+        uint32_t co : 1; /** Overflow cause bit. Wired to 0 on SH-2E. */
+        uint32_t cz : 1; /** Division-by-zero cause bit. */
+        uint32_t cv : 1; /** Invalid operation cause bit. */
+
+        uint32_t ce : 1; /** FPU error cause bit. Wired to 0 on SH-2E. */
+
+        uint32_t dn : 1; /** Denormalized bit. Wired to 1 on SH-2E. */
+
+        uint32_t _rf0 : 13; /** Reserved field 0 (bits 31 to 19). Wired to 0. */
+#endif
     };
 } sh2e_fpu_scr_t;
 

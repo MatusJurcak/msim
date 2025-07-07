@@ -2163,7 +2163,6 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
         return machine_specific_instructions ? &halt : &illegal;
     }
 
-
     // .word 0x8201
     case 0b1000001000000001: {
         static sh2e_insn_desc_t const cpu_reg_dump = {
@@ -2175,7 +2174,21 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
         };
         return &cpu_reg_dump;
     }
+
+    // .word 0x8202
+    case 0b1000001000000010: {
+        static sh2e_insn_desc_t const fpu_reg_dump = {
+            .assembly = "FPU REG DUMP",
+            .abstract = "(fpu registers dump)",
+            .exec = sh2e_insn_exec_fpu_reg_dump,
+            .disasm = sh2e_insn_desc_dump_z_format,
+            .cycles = 1,
+        };
+        return &fpu_reg_dump;
     }
+    }
+
+    return NULL;
 }
 
 /****************************************************************************
