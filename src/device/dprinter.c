@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../arch/endianness.h"
 #include "../assert.h"
 #include "../fault.h"
 #include "../parser.h"
@@ -34,6 +35,10 @@ typedef struct {
     char *fname; /**< Output file name */
 
     uint64_t count; /**< Number of printed characters */
+
+    // true for little endian
+    // false for big endian
+    bool endianness;
 } printer_data_t;
 
 /** Init command implementation
@@ -71,6 +76,7 @@ static bool dprinter_init(token_t *parm, device_t *dev)
     data->file = stdout;
     data->fname = NULL;
     data->count = 0;
+    data->endianness = false;
 
     return true;
 }
@@ -160,6 +166,22 @@ static void printer_done(device_t *dev)
     safe_free(dev->data);
 }
 
+/** Endian command implementation
+ *
+ */
+static bool dprinter_endian(token_t *parm, device_t *dev)
+{
+    printer_data_t *data = (printer_data_t *) dev->data;
+    char *endian = parm_str(parm);
+
+    if (strcmp(endian, "big") == 0) {
+        data->endianness = true;
+    } else {
+        data->endianness = false;
+    }
+    return true;
+}
+
 /** Write command implementation
  *
  */
@@ -168,10 +190,11 @@ static void printer_write32(unsigned int procno, device_t *dev, ptr36_t addr, ui
     ASSERT(dev != NULL);
 
     printer_data_t *data = (printer_data_t *) dev->data;
+    uint32_t value = data->endianness ? be32toh(val) : le32toh(val);
 
     switch (addr - data->addr) {
     case REGISTER_CHAR:
-        fprintf(data->file, "%c", (char) val);
+        fprintf(data->file, "%c", (char) value);
         /* Write to console is flushed immediately */
         /* This makes debugging somewhat easier */
         if (data->file == stdout) {
@@ -230,6 +253,13 @@ static cmd_t printer_cmds[] = {
             "Redirect output to the standard output",
             "Redirect output to the standard output",
             NOCMD },
+    { "endian",
+            (fcmd_t) dprinter_endian,
+            DEFAULT,
+            DEFAULT,
+            "Change the endianness",
+            "Change the endianness",
+            REQ STR "big/little (default little)" END },
     LAST_CMD
 };
 

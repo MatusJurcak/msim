@@ -15,10 +15,17 @@
 #define be32toh(x) OSSwapBigToHostInt32(x)
 #define le32toh(x) OSSwapLittleToHostInt32(x)
 
+#define htobe64(x) OSSwapHostToBigInt64(x)
+#define htole64(x) OSSwapHostToLittleInt64(x)
+#define be64toh(x) OSSwapBigToHostInt64(x)
+#define le64toh(x) OSSwapLittleToHostInt64(x)
+
 #elif defined(__linux__)
 
 #include <endian.h>
 
 #endif
+
+// TODO: WINDOWS
 
 #endif // ENDIANNESS_H_
