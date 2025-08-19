@@ -152,6 +152,18 @@ dsh2ecpu_cmd_goto(token_t *parm, device_t *const dev)
     return true;
 }
 
+static bool
+dsh2cpu_cmd_configure_intc_address(token_t *parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    uint32_t addr = ALIGN_DOWN(parm_uint_next(&parm), sizeof(uint32_t));
+
+    sh2e_intc_init_regs(device_get_sh2e_cpu(dev), addr);
+
+    return true;
+}
+
 /** Execute one processor step. */
 static void
 dsh2ecpu_step(device_t *const dev)
@@ -219,6 +231,14 @@ static cmd_t const dsh2ecpu_cmds[] = {
             DEFAULT,
             "Go to address",
             "Go to address",
+            REQ INT "addr/address" END },
+    { "intcaddr",
+            (fcmd_t) dsh2cpu_cmd_configure_intc_address,
+
+            DEFAULT,
+            DEFAULT,
+            "Configure INTC registers addresses",
+            "Configure INTC registers addresses",
             REQ INT "addr/address" END },
     LAST_CMD
 };

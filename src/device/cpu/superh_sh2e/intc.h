@@ -528,6 +528,8 @@ typedef struct sh2e_intc {
 
 } sh2e_intc_t;
 
+extern void sh2e_intc_init_regs(sh2e_cpu_t * cpu, uint32_t regs_addr);
+
 extern void sh2e_intc_init(sh2e_cpu_t * cpu);
 
 extern sh2e_intc_source_t sh2e_check_pending_interrupts(sh2e_cpu_t * cpu);

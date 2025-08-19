@@ -1166,7 +1166,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     case ic8(0b0110, 0b0111): {
-        static sh2e_insn_desc_t const not = {
+        static sh2e_insn_desc_t const not= {
             .assembly = "NOT Rm, Rn",
             .abstract = "~Rm → Rn",
             .exec = sh2e_insn_exec_not,
