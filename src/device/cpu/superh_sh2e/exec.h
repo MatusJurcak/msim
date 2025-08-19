@@ -141,6 +141,7 @@ extern sh2e_exception_t sh2e_insn_exec_shlr(sh2e_cpu_t * cpu, sh2e_insn_n_t insn
 extern sh2e_exception_t sh2e_insn_exec_shlr2(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
 extern sh2e_exception_t sh2e_insn_exec_shlr8(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
 extern sh2e_exception_t sh2e_insn_exec_shlr16(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
+extern sh2e_exception_t sh2e_insn_exec_sleep(sh2e_cpu_t * cpu, sh2e_insn_z_t insn);
 extern sh2e_exception_t sh2e_insn_exec_stc_cpu(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
 extern sh2e_exception_t sh2e_insn_exec_stcm_cpu(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
 extern sh2e_exception_t sh2e_insn_exec_sts_cpu(sh2e_cpu_t * cpu, sh2e_insn_n_t insn);
