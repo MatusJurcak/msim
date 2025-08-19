@@ -13,6 +13,7 @@
 #define SUPERH_SH2E_CPU_H_
 
 #include "insn.h"
+#include "intc.h"
 
 #include "../../../assert.h"
 #include "../../../list.h"
@@ -321,6 +322,9 @@ typedef struct sh2e_cpu {
     uint_fast64_t cycles;
 
     unsigned int id;
+
+    /** Interrupt controller */
+    sh2e_intc_t intc;
 } sh2e_cpu_t;
 
 

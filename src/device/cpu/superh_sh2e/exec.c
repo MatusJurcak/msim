@@ -1521,6 +1521,9 @@ sh2e_insn_exec_rte(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
     cpu->pc_next = stack_pc;
 
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+
+    // Returning from exception means program execution resumes
+    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -1690,6 +1693,15 @@ sh2e_exception_t
 sh2e_insn_exec_shlr16(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn) {
     return sh2e_insn_shlrn(cpu, insn, 16);
 }
+
+// SLEEP (Sleep): System Control Instruction
+
+sh2e_exception_t
+sh2e_insn_exec_sleep(sh2e_cpu_t * cpu, sh2e_insn_z_t insn) {
+    cpu->pr_state = SH2E_PSTATE_POWER_DOWN;
+    return SH2E_EXCEPTION_NONE;
+}
+
 
 // STC (Store Control Register): System Control Instruction [Interrupt Disabled Instruction]
 

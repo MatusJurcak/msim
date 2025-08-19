@@ -89,7 +89,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         static sh2e_insn_desc_t const sleep = {
             .assembly = "SLEEP",
             .abstract = "(sleep)",
-            .exec = sh2e_insn_exec_not_implemented,
+            .exec = sh2e_insn_exec_sleep,
             .disasm = sh2e_insn_desc_dump_z_format,
             .cycles = 3,
         };
@@ -2172,7 +2172,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
             .disasm = sh2e_insn_desc_dump_z_format,
             .cycles = 1,
         };
-        return &cpu_reg_dump;
+        return machine_specific_instructions ? &cpu_reg_dump : &illegal;
     }
 
     // .word 0x8202
@@ -2184,7 +2184,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
             .disasm = sh2e_insn_desc_dump_z_format,
             .cycles = 1,
         };
-        return &fpu_reg_dump;
+        return machine_specific_instructions ? &fpu_reg_dump : &illegal;
     }
     }
 
