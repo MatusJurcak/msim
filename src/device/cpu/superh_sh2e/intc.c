@@ -46,10 +46,10 @@ sh2e_intc_is_interrupt_source_irq(sh2e_intc_source_t interrupt_source) {
 }
 
 void
-sh2e_intc_init(sh2e_cpu_t * cpu) {
-    memset(&cpu->intc, 0, sizeof(sh2e_intc_t));
+sh2e_intc_init_regs(sh2e_cpu_t * cpu, uint32_t regs_addr) {
+    ASSERT(cpu != NULL);
 
-    cpu->intc.intc_regs = (sh2e_intc_regs_t *) (uintptr_t) (INTC_REGISTERS_START_ADDRESS);
+    cpu->intc.intc_regs = (sh2e_intc_regs_t *) (address(regs_addr));
 
     /** Setup the priority registers */
     for (size_t i = 0; i < INTC_IPR_REGISTERS_COUNT; i++) {
@@ -60,6 +60,13 @@ sh2e_intc_init(sh2e_cpu_t * cpu) {
     // TODO: if the NMI pin is high the value of ICR should be H'8000
     sh2e_intc_icr_reg_write(cpu, 0);
     sh2e_intc_isr_reg_write(cpu, 0);
+}
+
+void
+sh2e_intc_init(sh2e_cpu_t * cpu) {
+    memset(&cpu->intc, 0, sizeof(sh2e_intc_t));
+
+    sh2e_intc_init_regs(cpu, INTC_REGISTERS_START_ADDRESS);
 }
 
 static bool
