@@ -343,7 +343,7 @@ sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu, sh2e_intc_source_t in
     uint32_t const stack_sr_addr = cpu->cpu_regs.sp - sizeof(uint32_t);
 
     // Push PC to stack (Address of instruction after executed instruction)
-    uint32_t const stack_pc = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
+    uint32_t const stack_pc = cpu->pc_next;
     uint32_t const stack_pc_addr = stack_sr_addr - sizeof(uint32_t);
 
     bool success_sr = physmem_write32(cpu->id, stack_sr_addr, htobe32(stack_sr), true);
