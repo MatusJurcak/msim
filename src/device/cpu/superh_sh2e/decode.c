@@ -58,6 +58,8 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
             .abstract = "PR → PC (delayed)",
             .exec = sh2e_insn_exec_rts,
             .disasm = sh2e_insn_desc_dump_z_format,
+            .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &rts;
@@ -113,6 +115,8 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
             .abstract = "stack area → PC/SR (delayed)",
             .exec = sh2e_insn_exec_rte,
             .disasm = sh2e_insn_desc_dump_z_format,
+            .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 4,
         };
         return &rte;
@@ -683,6 +687,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "Rm → MACH",
             .exec = sh2e_insn_exec_lds_mach,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
             .cycles = 1,
         };
         return &lds_mach;
@@ -694,6 +699,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "Rm → MACL",
             .exec = sh2e_insn_exec_lds_macl,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
             .cycles = 1,
         };
         return &lds_macl;
@@ -705,6 +711,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "Rm → PR",
             .exec = sh2e_insn_exec_lds_pr,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
             .cycles = 1,
         };
         return &lds_pr;
@@ -717,6 +724,8 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "Rm → PC (delayed)",
             .exec = sh2e_insn_exec_jmp,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &jmp;
@@ -728,6 +737,8 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "PC + 4 → PR, Rm → PC (delayed)",
             .exec = sh2e_insn_exec_jsr,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &jsr;
@@ -801,6 +812,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "[Rm] → MACH, Rm + 4 → Rm",
             .exec = sh2e_insn_exec_ldsl_mach,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
             .cycles = 1,
         };
         return &ldsl_mach;
@@ -812,6 +824,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "[Rm] → MACL, Rm + 4 → Rm",
             .exec = sh2e_insn_exec_ldsl_macl,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
             .cycles = 1,
         };
         return &ldsl_macl;
@@ -823,6 +836,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .abstract = "[Rm] → PR, Rm + 4 → Rm",
             .exec = sh2e_insn_exec_ldsl_pr,
             .disasm = sh2e_insn_desc_dump_m_format,
+            .disable_interrupts = true,
             .cycles = 1,
         };
         return &ldsl_pr;
@@ -836,6 +850,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .exec = sh2e_insn_exec_braf,
             .disasm = sh2e_insn_desc_dump_m_format,
             .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &braf;
@@ -848,6 +863,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .exec = sh2e_insn_exec_bsrf,
             .disasm = sh2e_insn_desc_dump_m_format,
             .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &bsrf;
@@ -1166,14 +1182,14 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     case ic8(0b0110, 0b0111): {
-        static sh2e_insn_desc_t const not= {
+        static sh2e_insn_desc_t const not_insn = {
             .assembly = "NOT Rm, Rn",
             .abstract = "~Rm → Rn",
             .exec = sh2e_insn_exec_not,
             .disasm = sh2e_insn_desc_dump_nm_format,
             .cycles = 1,
         };
-        return &not;
+        return &not_insn;
     }
 
     case ic8(0b0010, 0b1011): {
@@ -1684,6 +1700,7 @@ sh2e_insn_decode_md_format(sh2e_insn_md_t const insn) {
             .exec = sh2e_insn_exec_movbl4,
             .disasm = sh2e_insn_desc_dump_md_format_movb4,
             .cycles = 1,
+
         };
         return &movbl4;
     }
@@ -1695,6 +1712,7 @@ sh2e_insn_decode_md_format(sh2e_insn_md_t const insn) {
             .exec = sh2e_insn_exec_movwl4,
             .disasm = sh2e_insn_desc_dump_md_format_movw4,
             .cycles = 1,
+
         };
         return &movwl4;
     }
@@ -1719,6 +1737,7 @@ sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn) {
             .exec = sh2e_insn_exec_movbs4,
             .disasm = sh2e_insn_desc_dump_nd4_format_movb4,
             .cycles = 1,
+
         };
         return &movbs4;
     }
@@ -1730,6 +1749,7 @@ sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn) {
             .exec = sh2e_insn_exec_movws4,
             .disasm = sh2e_insn_desc_dump_nd4_format_movw4,
             .cycles = 1,
+
         };
         return &movws4;
     }
@@ -1754,6 +1774,7 @@ sh2e_insn_decode_nmd_format(sh2e_insn_nmd_t const insn) {
             .exec = sh2e_insn_exec_movls4,
             .disasm = sh2e_insn_desc_dump_nmd_format,
             .cycles = 1,
+
         };
         return &movls4;
     }
@@ -1880,6 +1901,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
             .exec = sh2e_insn_exec_bfs,
             .disasm = sh2e_insn_desc_dump_d_format_branch,
             .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 1,
             .branch_cycles = 1,
         };
@@ -1905,6 +1927,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
             .exec = sh2e_insn_exec_bts,
             .disasm = sh2e_insn_desc_dump_d_format_branch,
             .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 1,
             .branch_cycles = 1,
         };
@@ -1931,6 +1954,7 @@ sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn) {
             .exec = sh2e_insn_exec_bra,
             .disasm = sh2e_insn_desc_dump_d12_format,
             .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &bra;
@@ -1943,6 +1967,7 @@ sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn) {
             .exec = sh2e_insn_exec_bsr,
             .disasm = sh2e_insn_desc_dump_d12_format,
             .disable_interrupts = true,
+            .disable_address_errors = true,
             .cycles = 2,
         };
         return &bsr;

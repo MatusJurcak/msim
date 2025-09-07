@@ -152,14 +152,59 @@ dsh2ecpu_cmd_goto(token_t *parm, device_t *const dev)
     return true;
 }
 
+/** Configure interrupt controller address command. */
 static bool
-dsh2cpu_cmd_configure_intc_address(token_t *parm, device_t *const dev)
+dsh2ecpu_cmd_configure_intc_address(token_t *parm, device_t *const dev)
 {
     ASSERT(dev != NULL);
 
     uint32_t addr = ALIGN_DOWN(parm_uint_next(&parm), sizeof(uint32_t));
 
     sh2e_intc_init_regs(device_get_sh2e_cpu(dev), addr);
+
+    return true;
+}
+
+/** Add interrupt source command. */
+static bool
+dsh2ecpu_cmd_add_interrupt_source(token_t *parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    uint16_t source_id = parm_uint_next(&parm);
+    uint8_t priority_pool_index = parm_uint_next(&parm);
+    uint8_t priority = parm_uint_next(&parm);
+
+    sh2e_intc_add_interrupt_source(device_get_sh2e_cpu(dev), source_id, priority_pool_index, priority);
+
+    return true;
+}
+
+/** Stat command implementation
+ *
+ */
+static bool dsh2ecpu_cmd_stat(token_t *parm, device_t *dev)
+{
+    sh2e_cpu_t *cpu = device_get_sh2e_cpu(dev);
+
+    printf("[Total cycles            ] [Program execution cycles] [Power down cycles       ]\n");
+    printf("%26" PRIu64 " %26" PRIu64 " %26" PRIu64 "\n\n",
+            (uint64_t) cpu->program_execution_cycles + cpu->power_down_cycles,
+            cpu->program_execution_cycles, cpu->power_down_cycles);
+
+    return true;
+}
+
+/**
+ * Assert an interrupt. (using this in order to mimick a device interrupt without acctually having a device in configuration)
+ */
+static bool dsh2ecpu_cmd_assert_interrupt(token_t *parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    uint16_t interrupt_source = parm_uint_next(&parm);
+
+    sh2e_cpu_assert_interrupt(device_get_sh2e_cpu(dev), interrupt_source);
 
     return true;
 }
@@ -232,14 +277,36 @@ static cmd_t const dsh2ecpu_cmds[] = {
             "Go to address",
             "Go to address",
             REQ INT "addr/address" END },
-    { "intcaddr",
-            (fcmd_t) dsh2cpu_cmd_configure_intc_address,
-
+    { "intc_address",
+            (fcmd_t) dsh2ecpu_cmd_configure_intc_address,
             DEFAULT,
             DEFAULT,
             "Configure INTC registers addresses",
             "Configure INTC registers addresses",
             REQ INT "addr/address" END },
+    { "intc_add",
+            (fcmd_t) dsh2ecpu_cmd_add_interrupt_source,
+            DEFAULT,
+            DEFAULT,
+            "Add interrupt source",
+            "Add interrupt source <source_id> <priority_pool_index> <priority>",
+            REQ INT "source_id" NEXT
+                    REQ INT "priority_pool_index" NEXT
+                            REQ INT "priority" END },
+    { "stat",
+            (fcmd_t) dsh2ecpu_cmd_stat,
+            DEFAULT,
+            DEFAULT,
+            "Display CPU statistics",
+            "Display CPU statistics",
+            NOCMD },
+    { "assert_interrupt",
+            (fcmd_t) dsh2ecpu_cmd_assert_interrupt,
+            DEFAULT,
+            DEFAULT,
+            "Assert interrupt",
+            "Assert interrupt <interrupt_source>",
+            REQ INT "interrupt_source" END },
     LAST_CMD
 };
 

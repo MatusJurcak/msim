@@ -38,6 +38,7 @@ typedef struct sh2e_insn_desc {
     unsigned const cycles;
     unsigned const branch_cycles; /** Extra cycles (in addition to `cycles`) when a branch is taken. */
     bool const disable_interrupts; /** Ignore interrupts between this and the following instruction. */
+    bool const disable_address_errors; /** Ignore address errors between this and the following instruction. */
     bool const bus_lock; /** Lock bus while executing the instruction. */
 } sh2e_insn_desc_t;
 
