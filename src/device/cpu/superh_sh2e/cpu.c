@@ -445,7 +445,7 @@ sh2e_try_handle_exceptions(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex)
     }
 }
 
-void
+static void
 sh2e_cpu_account(sh2e_cpu_t * const restrict cpu, unsigned int insn_cycles) {
     ASSERT(cpu != NULL);
 
@@ -552,7 +552,7 @@ sh2e_cpu_goto(sh2e_cpu_t * const restrict cpu, ptr64_t const addr) {
 void
 sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
     ASSERT(cpu != NULL);
-    ASSERT(num >= INTC_SOURCE_MIN_VALUE && num <= INTC_SOURCE_MAX_VALUE && "Interrupt number out of range");
+    ASSERT(num >= INTC_SOURCE_MIN_VALUE && "Interrupt number out of range");
     for (unsigned int i = 0; i < cpu->intc.pool.count; i++) {
         if (cpu->intc.pool.sources[i].source_id == num) {
             cpu->intc.pool.sources[i].pending = true;
@@ -568,7 +568,7 @@ sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
 void
 sh2e_cpu_deassert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
     ASSERT(cpu != NULL);
-    ASSERT(num >= INTC_SOURCE_MIN_VALUE && num <= INTC_SOURCE_MAX_VALUE && "Interrupt number out of range");
+    ASSERT(num >= INTC_SOURCE_MIN_VALUE && "Interrupt number out of range");
     for (unsigned int i = 0; i < cpu->intc.pool.count; i++) {
         if (cpu->intc.pool.sources[i].source_id == num) {
             cpu->intc.pool.sources[i].pending = false;

@@ -103,7 +103,7 @@ sh2e_intc_init(sh2e_cpu_t * cpu) {
 void
 sh2e_intc_add_interrupt_source(sh2e_cpu_t * cpu, uint16_t source_id, uint8_t priority_pool_index, uint8_t priority) {
     ASSERT(cpu != NULL);
-    ASSERT(source_id >= INTC_SOURCE_MIN_VALUE && source_id <= INTC_SOURCE_MAX_VALUE);
+    ASSERT(source_id >= INTC_SOURCE_MIN_VALUE);
     ASSERT(priority_pool_index < INTC_IPR_HALF_BYTES_LENGTH);
     ASSERT(priority <= INTC_PRIORITY_MAX_VALUE);
 
@@ -207,7 +207,7 @@ sh2e_check_pending_interrupts(sh2e_cpu_t * cpu) {
 void
 sh2e_accept_interrupt(sh2e_cpu_t * cpu, uint16_t interrupt_source) {
     ASSERT(cpu != NULL);
-    ASSERT(interrupt_source > INTC_SOURCE_MIN_VALUE && interrupt_source <= INTC_SOURCE_MAX_VALUE && "Interrupt source out of range");
+    ASSERT(interrupt_source > INTC_SOURCE_MIN_VALUE && "Interrupt source out of range");
 
     cpu->cpu_regs.sr.im = cpu->intc.to_be_accepted_priority;
     cpu->intc.to_be_accepted_priority = 0;
