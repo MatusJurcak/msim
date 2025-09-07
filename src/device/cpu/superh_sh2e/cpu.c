@@ -24,13 +24,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** @brief Cached instruction item */
+typedef struct {
+    sh2e_insn_exec_fn_t insn;
+    unsigned int cycles;
+    bool disable_interrupts;
+    bool disable_address_errors;
+} cached_insn_t;
+
 
 /** @brief Page of cached decoded instructions. */
 
 typedef struct {
     item_t item;
     ptr36_t addr;
-    sh2e_insn_exec_fn_t insns[FRAME_SIZE / sizeof(sh2e_insn_t)];
+    cached_insn_t insns[FRAME_SIZE / sizeof(sh2e_insn_t)];
 } cache_item_t;
 
 
@@ -109,7 +117,11 @@ sh2e_cpu_fetch_insn(
     ASSERT(cpu != NULL);
     ASSERT(output_insn != NULL);
 
-    // TODO Check alignment.
+    // Check alignment (must be even address).
+    if (addr & 1) {
+        return SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
+    }
+
     output_insn->word = sh2e_physmem_read16(cpu->id, addr, true);
     return SH2E_EXCEPTION_NONE;
 }
@@ -166,13 +178,14 @@ sh2e_power_on_reset(sh2e_cpu_t * const restrict cpu) {
 
 static void
 sh2e_cpu_insn_cache_decode_page(sh2e_cpu_t * const restrict cpu, cache_item_t * cache_item) {
-    // printf("decoding page 0x%08" PRIx64 "\n", cache_item->addr);
-
     for (size_t i = 0; i < FRAME_SIZE / sizeof(sh2e_insn_t); i++) {
         ptr36_t addr = cache_item->addr + (i * sizeof(sh2e_insn_t));
         sh2e_insn_t insn = (sh2e_insn_t) sh2e_physmem_read16(cpu->id, addr, false);
         sh2e_insn_desc_t const * desc = sh2e_insn_decode(insn);
-        cache_item->insns[i] = desc->exec;
+        cache_item->insns[i].insn = desc->exec;
+        cache_item->insns[i].disable_interrupts = desc->disable_interrupts;
+        cache_item->insns[i].disable_address_errors = desc->disable_address_errors;
+        cache_item->insns[i].cycles = desc->cycles;
     }
 }
 
@@ -191,13 +204,11 @@ sh2e_cpu_insn_cache_update(sh2e_cpu_t * const restrict cpu, cache_item_t * cache
 
 static cache_item_t *
 sh2e_cpu_insn_cache_try_add(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
-    // printf("trying to add insn cache page for 0x%08" PRIx64 "\n", phys);
     frame_t * frame = physmem_find_frame(phys);
     if (frame == NULL) {
         return NULL;
     }
 
-    // printf("  found frame %p\n", frame);
     cache_item_t * cache_item = safe_malloc(sizeof(cache_item_t));
     cache_item_init(cache_item);
     cache_item->addr = ALIGN_DOWN(phys, FRAME_SIZE);
@@ -210,7 +221,7 @@ sh2e_cpu_insn_cache_try_add(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
 
 
 static sh2e_insn_exec_fn_t
-sh2e_cpu_fetch_insn_func(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
+sh2e_cpu_fetch_insn_func(sh2e_cpu_t * const restrict cpu, ptr36_t phys, unsigned int * insn_cycles) {
     cache_item_t * cache_item = NULL;
     if (sh2e_cpu_insn_cache_get(phys, &cache_item)) {
         ASSERT(cache_item != NULL);
@@ -224,8 +235,14 @@ sh2e_cpu_fetch_insn_func(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
             list_push(&sh2e_insn_cache, &cache_item->item);
         }
 
+        cached_insn_t * item = &cache_item->insns[PHYS2CACHEINSTR(phys)];
+
+        cpu->disable_interrupts = item->disable_interrupts;
+        cpu->disable_address_errors = item->disable_address_errors;
+        *insn_cycles = item->cycles;
+
         // Return the function representing the instruction.
-        return cache_item->insns[PHYS2CACHEINSTR(phys)];
+        return item->insn;
     }
 
     //
@@ -234,7 +251,14 @@ sh2e_cpu_fetch_insn_func(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
     //
     cache_item = sh2e_cpu_insn_cache_try_add(cpu, phys);
     if (cache_item != NULL) {
-        return cache_item->insns[PHYS2CACHEINSTR(phys)];
+
+        cached_insn_t * item = &cache_item->insns[PHYS2CACHEINSTR(phys)];
+
+        cpu->disable_interrupts = item->disable_interrupts;
+        cpu->disable_address_errors = item->disable_address_errors;
+        *insn_cycles = item->cycles;
+
+        return item->insn;
     }
 
     alert("Trying to fetch instructions from outside of physical memory");
@@ -247,16 +271,13 @@ sh2e_cpu_fetch_insn_func(sh2e_cpu_t * const restrict cpu, ptr36_t phys) {
  * and handle interrupts or exceptions.
  */
 static sh2e_exception_t
-sh2e_cpu_execute_insn(sh2e_cpu_t * const restrict cpu) {
+sh2e_cpu_execute_insn(sh2e_cpu_t * const restrict cpu, unsigned int * insn_cycles) {
 
     ptr36_t insn_phys = cpu->cpu_regs.pc;
-    // printf("executing insn at %p\n", (void *) insn_phys);
 
     sh2e_insn_t insn;
     sh2e_exception_t fetch_ex = sh2e_cpu_fetch_insn(cpu, insn_phys, &insn);
     if (fetch_ex != SH2E_EXCEPTION_NONE) {
-        // TODO jump to exception handler
-        alert("exception %d when fetching instruction", fetch_ex);
         return fetch_ex;
     }
 
@@ -264,15 +285,14 @@ sh2e_cpu_execute_insn(sh2e_cpu_t * const restrict cpu) {
         sh2e_cpu_dump_insn(cpu, cpu->cpu_regs.pc, insn);
     }
 
-    // printf("fetching insn at 0x%08" PRIx64 "\n", insn_phys);
-    sh2e_insn_exec_fn_t exec_insn = sh2e_cpu_fetch_insn_func(cpu, insn_phys);
+    sh2e_insn_exec_fn_t exec_insn = sh2e_cpu_fetch_insn_func(cpu, insn_phys, insn_cycles);
 
-    // printf("calling instruction function: %p\n", exec_insn);
     return exec_insn(cpu, insn);
 }
 
 static void
 sh2e_cpu_handle_exception(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) {
+    cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
     uint32_t vector_addr = 0;
     sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
 
@@ -307,37 +327,44 @@ sh2e_cpu_handle_exception(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) 
         stack_pc = cpu->cpu_regs.pc;
     }
     case SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION:
-    // The PC value saved is the jump address of the delayed branch instruction
-    // immediately before the undefined code or the instruction that rewrites the PC
-
-    // TODO: we should save the address in cpu->pc_next for SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION
     case SH2E_EXCEPTION_FPU_OPERATION:
     case SH2E_EXCEPTION_CPU_ADDRESS_ERROR: {
         stack_pc = cpu->pc_next;
     }
     default: {
         break;
+        alert("Unsupported exception");
     }
     }
 
     uint32_t const stack_pc_addr = stack_sr_addr - sizeof(uint32_t);
 
-    bool success_sr = physmem_write32(cpu->id, stack_sr_addr, htobe32(stack_sr), true);
+    sh2e_exception_t cpu_write_ex;
 
-    bool success_pc = physmem_write32(cpu->id, stack_pc_addr, htobe32(stack_pc), true);
+    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_sr_addr, stack_sr);
+    // TODO:  handle address exception during stacking, now just assert
+    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
+        ASSERT(false && "Exception during the stacking of SR");
+    }
 
-    // TODO: handle address exception during stacking, now just assert
-    if (!success_sr || !success_pc) {
-        ASSERT(false && "EXCEPTION DURING STACKING");
+    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_pc_addr, stack_pc);
+    // TODO:  handle address exception during stacking, now just assert
+    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
+        ASSERT(false && "Exception during the stacking of PC");
     }
 
     cpu->cpu_regs.sp = stack_pc_addr;
     // TODO: ugly, need to subtract only to add the same value later on
     cpu->cpu_regs.pc = vector_addr - sizeof(sh2e_insn_t);
+    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
+
+    // Go back to program execution state
+    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
 
 static void
-sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu, sh2e_intc_source_t interrupt_source) {
+sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu, uint16_t interrupt_source) {
+    cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
     // Push SR to stack
     uint32_t const stack_sr = cpu->cpu_regs.sr.value;
     uint32_t const stack_sr_addr = cpu->cpu_regs.sp - sizeof(uint32_t);
@@ -346,12 +373,18 @@ sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu, sh2e_intc_source_t in
     uint32_t const stack_pc = cpu->pc_next;
     uint32_t const stack_pc_addr = stack_sr_addr - sizeof(uint32_t);
 
-    bool success_sr = physmem_write32(cpu->id, stack_sr_addr, htobe32(stack_sr), true);
-    bool success_pc = physmem_write32(cpu->id, stack_pc_addr, htobe32(stack_pc), true);
+    sh2e_exception_t cpu_write_ex;
 
-    // TODO: handle address exception during stacking, now just assert
-    if (!success_sr || !success_pc) {
-        ASSERT(false && "EXCEPTION DURING STACKING");
+    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_sr_addr, stack_sr);
+    // TODO:  handle address exception during stacking, now just assert
+    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
+        ASSERT(false && "Exception during the stacking of SR");
+    }
+
+    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_pc_addr, stack_pc);
+    // TODO:  handle address exception during stacking, now just assert
+    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
+        ASSERT(false && "Exception during the stacking of PC");
     }
 
     sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
@@ -361,41 +394,69 @@ sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu, sh2e_intc_source_t in
     uint32_t eva_pc_addr = (uint32_t) address(&epva->vectors[interrupt_source]);
     // TODO: ugly, need to subtract only to add the same value later on
     cpu->cpu_regs.pc = (sh2e_physmem_read32(cpu->id, eva_pc_addr, false) - sizeof(sh2e_insn_t));
+    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
 
     sh2e_accept_interrupt(cpu, interrupt_source);
+
+    // Go back to program execution state
+    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
     return;
 }
 
 static void
-sh2e_cpu_handle_exception_or_interrupt(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) {
-    ASSERT(cpu != NULL);
+sh2e_try_handle_exceptions(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) {
+    uint16_t interrupt_source = 0;
 
-    sh2e_intc_source_t interrupt_source = sh2e_check_pending_interrupts(cpu);
+    // If interrupts are not disabled, check for pending interrupts.
+    if (!cpu->disable_interrupts) {
+        interrupt_source = sh2e_check_pending_interrupts(cpu);
+    }
 
-    if (ex == SH2E_EXCEPTION_NONE && !interrupt_source) {
+    // Check if address errors are disabled.
+    if (cpu->disable_address_errors && ex == SH2E_EXCEPTION_CPU_ADDRESS_ERROR) {
+        cpu->pending_address_error = true;
+        ex = SH2E_EXCEPTION_NONE;
+    }
+
+    // Exception Processing Priority Order:
+    // - CPU address error
+    if ((cpu->pending_address_error || ex == SH2E_EXCEPTION_CPU_ADDRESS_ERROR) && !cpu->disable_address_errors) {
+        cpu->pending_address_error = false;
+        sh2e_cpu_handle_exception(cpu, SH2E_EXCEPTION_CPU_ADDRESS_ERROR);
         return;
     }
 
-    cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
-
-    // Exception Processing Priority Order
-    // - CPU address error
     // - FPU exception
-    // - Interrupts
-    // - General illegal instructions
-    // - Illegal slot instructions
-
-    if (ex == SH2E_EXCEPTION_CPU_ADDRESS_ERROR || ex == SH2E_EXCEPTION_FPU_OPERATION) {
+    if (ex == SH2E_EXCEPTION_FPU_OPERATION) {
         sh2e_cpu_handle_exception(cpu, ex);
-    } else if (interrupt_source) {
-        sh2e_cpu_handle_interrupt(cpu, interrupt_source);
-    } else if (ex != SH2E_EXCEPTION_NONE) {
-        sh2e_cpu_handle_exception(cpu, ex);
+        return;
     }
 
-    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
+    // - Interrupts
+    if (interrupt_source) {
+        sh2e_cpu_handle_interrupt(cpu, interrupt_source);
+        return;
+    }
+
+    // - General illegal instructions
+    // - Illegal slot instructions
+    if (ex != SH2E_EXCEPTION_NONE) {
+        sh2e_cpu_handle_exception(cpu, ex);
+    }
 }
 
+void
+sh2e_cpu_account(sh2e_cpu_t * const restrict cpu, unsigned int insn_cycles) {
+    ASSERT(cpu != NULL);
+
+    if (cpu->pr_state == SH2E_PSTATE_POWER_DOWN) {
+        cpu->power_down_cycles++;
+    }
+
+    if (cpu->pr_state == SH2E_PSTATE_PROGRAM_EXECUTION) {
+        cpu->program_execution_cycles += insn_cycles;
+    }
+}
 
 /****************************************************************************
  * SH-2E CPU
@@ -438,14 +499,16 @@ sh2e_cpu_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
 
     sh2e_exception_t ex = SH2E_EXCEPTION_NONE;
+    unsigned int insn_cycles = 0;
 
     if (cpu->pr_state != SH2E_PSTATE_POWER_DOWN) {
-        ex = sh2e_cpu_execute_insn(cpu);
+        ex = sh2e_cpu_execute_insn(cpu, &insn_cycles);
     }
 
-    sh2e_cpu_handle_exception_or_interrupt(cpu, ex);
+    sh2e_try_handle_exceptions(cpu, ex);
 
-    // TODO Perform accounting.
+    // Accounting
+    sh2e_cpu_account(cpu, insn_cycles);
 
     // Update program counter (respect delay slots).
     if (cpu->pr_state != SH2E_PSTATE_POWER_DOWN) {
@@ -489,8 +552,15 @@ sh2e_cpu_goto(sh2e_cpu_t * const restrict cpu, ptr64_t const addr) {
 void
 sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
     ASSERT(cpu != NULL);
-    ASSERT(num <= INTC_SOURCE_MAX_VALUE && "Interrupt number out of range");
-    cpu->intc.interrupts_table[num] = true;
+    ASSERT(num >= INTC_SOURCE_MIN_VALUE && num <= INTC_SOURCE_MAX_VALUE && "Interrupt number out of range");
+    for (unsigned int i = 0; i < cpu->intc.pool.count; i++) {
+        if (cpu->intc.pool.sources[i].source_id == num) {
+            cpu->intc.pool.sources[i].pending = true;
+            return;
+        }
+    }
+
+    ASSERT(false && "Interrupt source not found!");
 }
 
 
@@ -498,6 +568,13 @@ sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
 void
 sh2e_cpu_deassert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
     ASSERT(cpu != NULL);
-    ASSERT(num <= INTC_SOURCE_MAX_VALUE && "Interrupt number out of range");
-    cpu->intc.interrupts_table[num] = false;
+    ASSERT(num >= INTC_SOURCE_MIN_VALUE && num <= INTC_SOURCE_MAX_VALUE && "Interrupt number out of range");
+    for (unsigned int i = 0; i < cpu->intc.pool.count; i++) {
+        if (cpu->intc.pool.sources[i].source_id == num) {
+            cpu->intc.pool.sources[i].pending = false;
+            return;
+        }
+    }
+
+    ASSERT(false && "Interrupt source not found!");
 }

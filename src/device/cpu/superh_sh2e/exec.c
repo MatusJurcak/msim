@@ -27,197 +27,6 @@
 #include <string.h>
 
 
-/**
- * @brief Reads an 8-bit value (byte) from memory, zero-extends it
- * to 32 bits, and stores it into `output_value`.
- *
- * @param cpu The CPU which makes the read.
- * @param addr The (physical) memory address to read from.
- * @param output_value Pointer to where to store the loaded value.
- * @return sh2e_exception_t Exception code related to the access.
- */
-static inline sh2e_exception_t
-sh2e_cpu_readz_byte(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
-    ASSERT(cpu != NULL);
-    ASSERT(output_value != NULL);
-
-    *output_value = sh2e_physmem_read8(cpu->id, addr, true);
-    return SH2E_EXCEPTION_NONE;
-}
-
-
-/**
- * @brief Reads an 8-bit value (byte) from memory, sign-extends it
- * to 32 bits, and stores it into `output_value`.
- *
- * @param cpu The CPU which makes the read.
- * @param addr The (physical) memory address to read from.
- * @param output_value Pointer to where to store the loaded value.
- * @return sh2e_exception_t Exception code related to the access.
- */
-static inline sh2e_exception_t
-sh2e_cpu_reads_byte(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
-    ASSERT(cpu != NULL);
-    ASSERT(output_value != NULL);
-
-    *output_value = sign_extend_8_32(sh2e_physmem_read8(cpu->id, addr, true));
-    return SH2E_EXCEPTION_NONE;
-}
-
-//
-
-/**
- * @brief Reads a 16-bit value (word) from memory, zero-extends it
- * to 32 bits, and stores it into `output_value`.
- *
- * @param cpu The CPU which makes the read.
- * @param addr The (physical) memory address to read from.
- * @param value Pointer to where to store the loaded value.
- * @return sh2e_exception_t Exception code related to the access.
- */
-static inline sh2e_exception_t
-sh2e_cpu_readz_word(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
-    ASSERT(cpu != NULL);
-    ASSERT(output_value != NULL);
-
-    // TODO Check alignment.
-    *output_value = sh2e_physmem_read16(cpu->id, addr, true);
-    return SH2E_EXCEPTION_NONE;
-}
-
-
-/**
- * @brief Reads a 16-bit value (word) from memory, sign-extends it
- * to 32 bits, and stores it into `output_value`.
- *
- * @param cpu The CPU which makes the read.
- * @param addr The (physical) memory address to read from.
- * @param value Pointer to where to store the loaded value.
- * @return sh2e_exception_t Exception code related to the access.
- */
-static inline sh2e_exception_t
-sh2e_cpu_reads_word(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
-    ASSERT(cpu != NULL);
-    ASSERT(output_value != NULL);
-
-    // TODO Check alignment.
-    *output_value = sign_extend_16_32(sh2e_physmem_read16(cpu->id, addr, true));
-    return SH2E_EXCEPTION_NONE;
-}
-
-//
-
-/**
- * @brief Reads a long word (32 bits) from memory.
- *
- * @param cpu The cpu which makes the read.
- * @param addr The (physical) memory address from which to load data.
- * @param value Pointer to where to store the loaded value.
- * @return sh2e_exception_t Exception code related to the access.
- */
-static inline sh2e_exception_t
-sh2e_cpu_read_long(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
-    ASSERT(cpu != NULL);
-    ASSERT(output_value != NULL);
-
-    // TODO Check alignment.
-    *output_value = sh2e_physmem_read32(cpu->id, addr, true);
-    return SH2E_EXCEPTION_NONE;
-}
-
-
-/**
- * @brief Reads a float (32 bits) from memory.
- *
- * @param cpu The cpu which makes the read.
- * @param addr The (physical) memory address from which to load data.
- * @param value Pointer to where to store the loaded value.
- * @return sh2e_exception_t Exception code related to the access.
- */
-static inline sh2e_exception_t
-sh2e_cpu_read_float(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    float32_t * const output_value
-) {
-    ASSERT(cpu != NULL);
-    ASSERT(output_value != NULL);
-
-    // TODO Check alignment.
-    uint32_t * const output_uint32 = (uint32_t *) output_value;
-    *output_uint32 = sh2e_physmem_read32(cpu->id, addr, true);
-    return SH2E_EXCEPTION_NONE;
-}
-
-
-//
-
-/** @brief Writes a byte value (8 bits) to memory. */
-static inline sh2e_exception_t
-sh2e_cpu_write_byte(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, uint32_t const value
-) {
-    ASSERT(cpu != NULL);
-
-    bool success = physmem_write8(cpu->id, addr, value, true);
-    return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
-}
-
-
-/** @brief Writes a word value (16 bits) to memory. */
-static inline sh2e_exception_t
-sh2e_cpu_write_word(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, uint32_t const value
-) {
-    ASSERT(cpu != NULL);
-
-    // TODO Check alignment.
-    bool success = physmem_write16(cpu->id, addr, htobe16(value), true);
-    return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
-}
-
-
-/** @brief Writes a long value (32 bits) to memory. */
-static inline sh2e_exception_t
-sh2e_cpu_write_long(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, uint32_t const value
-) {
-    ASSERT(cpu != NULL);
-
-    // TODO Check alignment.
-    bool success = physmem_write32(cpu->id, addr, htobe32(value), true);
-    return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
-}
-
-
-/** @brief Writes a float value (32 bits) to memory. */
-static inline sh2e_exception_t
-sh2e_cpu_write_float(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, float32_t const value
-) {
-    ASSERT(cpu != NULL);
-
-    // TODO Check alignment.
-    sh2e_fpu_ul_t const conv = { .fvalue = value };
-    bool success = physmem_write32(cpu->id, addr, htobe32(conv.ivalue), true);
-    return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
-}
-
-
 static inline uint32_t
 sh2e_cpu_get_sr(sh2e_cpu_t * const restrict cpu) {
     return cpu->cpu_regs.sr.value;
@@ -261,16 +70,20 @@ sh2e_insn_branch_t_eq(
     sh2e_cpu_t * const restrict cpu, sh2e_insn_d_t const insn,
     unsigned const t_expected, bool const delayed
 ) {
+    uint32_t const disp = sign_extend_8_32(insn.d8);
+    uint32_t const target = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
+
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
+        if (cpu->cpu_regs.sr.t == t_expected) {
+            cpu->pc_next = target;
+        }
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
     if (cpu->cpu_regs.sr.t == t_expected) {
         // TODO Leave cycle counting to the higher-level function.
-        cpu->cycles += delayed ? 1 : 2;
-
-        uint32_t const disp = sign_extend_8_32(insn.d8);
-        cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
+        cpu->program_execution_cycles += delayed ? 1 : 2;
+        cpu->pc_next = target;
         cpu->br_state = delayed ? SH2E_BRANCH_STATE_DELAY : SH2E_BRANCH_STATE_EXECUTE;
     }
 
@@ -578,12 +391,13 @@ sh2e_insn_exec_bfs(sh2e_cpu_t * const restrict cpu, sh2e_insn_d_t const insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_bra(sh2e_cpu_t * const restrict cpu, sh2e_insn_d12_t const insn) {
+    uint32_t const disp = sign_extend_12_32(insn.d12);
+    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
+
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
-    uint32_t const disp = sign_extend_12_32(insn.d12);
-    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
     return SH2E_EXCEPTION_NONE;
 }
@@ -605,13 +419,14 @@ sh2e_insn_exec_braf(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_bsr(sh2e_cpu_t * const restrict cpu, sh2e_insn_d12_t const insn) {
+    uint32_t const disp = sign_extend_12_32(insn.d12);
+    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
+    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
+
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
-    uint32_t const disp = sign_extend_12_32(insn.d12);
-    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
-    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
     return SH2E_EXCEPTION_NONE;
 }
@@ -864,11 +679,11 @@ sh2e_insn_exec_extuw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn)
 
 sh2e_exception_t
 sh2e_insn_exec_jmp(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
+    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
+
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
-
-    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
 
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
     return SH2E_EXCEPTION_NONE;
@@ -878,12 +693,12 @@ sh2e_insn_exec_jmp(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_jsr(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
+    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
+    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
+
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
-
-    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
-    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
 
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
     return SH2E_EXCEPTION_NONE;
@@ -1521,9 +1336,6 @@ sh2e_insn_exec_rte(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
     cpu->pc_next = stack_pc;
 
     cpu->br_state = SH2E_BRANCH_STATE_DELAY;
-
-    // Returning from exception means program execution resumes
-    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
     return SH2E_EXCEPTION_NONE;
 }
 

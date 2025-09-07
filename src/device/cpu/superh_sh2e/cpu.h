@@ -318,13 +318,21 @@ typedef struct sh2e_cpu {
 
     sh2e_branch_state_t br_state;
 
-    /** Accounting. */
-    uint_fast64_t cycles;
-
     unsigned int id;
+
+    /** Accounting. */
+    uint_fast64_t program_execution_cycles;
+
+    uint_fast64_t power_down_cycles;
 
     /** Interrupt controller */
     sh2e_intc_t intc;
+
+    bool disable_interrupts;
+
+    bool disable_address_errors;
+
+    bool pending_address_error;
 } sh2e_cpu_t;
 
 
@@ -420,15 +428,7 @@ extern void sh2e_cpu_goto(sh2e_cpu_t * cpu, ptr64_t addr);
 
 /** Memory operations */
 extern bool sh2e_cpu_convert_addr(sh2e_cpu_t const * cpu, ptr64_t virt, ptr36_t * phys, bool write);
-
-// extern sh2e_exception_t sh2e_cpu_readz_byte(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t * output_value);
-// extern sh2e_exception_t sh2e_cpu_reads_byte(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t * output_value);
-
-// extern sh2e_exception_t sh2e_cpu_readz_word(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t * output_value);
-// extern sh2e_exception_t sh2e_cpu_reads_word(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t * output_value);
-
 extern sh2e_exception_t sh2e_cpu_fetch_insn(sh2e_cpu_t const * cpu, uint32_t addr, sh2e_insn_t * output_insn);
-// extern sh2e_exception_t sh2e_cpu_read_long(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t * output_value);
 
 /** Interrupts */
 extern void sh2e_cpu_assert_interrupt(sh2e_cpu_t * cpu, unsigned int num);
