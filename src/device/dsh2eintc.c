@@ -14,7 +14,9 @@ static intc_ops_t const sh2e_intc_ops = {
     .interrupt_down = (interrupt_func_t) sh2e_intc_deassert_interrupt,
 
     .check_interrupts = (check_interrupts_func_t) sh2e_check_pending_interrupts,
-    .accept_interrupt = (accept_interrupt_func_t) sh2e_accept_interrupt
+    .accept_interrupt = (accept_interrupt_func_t) sh2e_accept_interrupt,
+
+    .init = (init_intc_func_t) sh2e_intc_init_regs,
 };
 
 /** INTC initialization */
@@ -69,7 +71,7 @@ dsh2eintc_cmd_configure_register_address(token_t *parm, device_t *const dev)
 
     uint32_t addr = ALIGN_DOWN(parm_uint_next(&parm), sizeof(uint32_t));
 
-    sh2e_intc_init_regs(get_sh2e_intc(dev), addr);
+    sh2e_intc_change_regs_address(get_sh2e_intc(dev), addr);
 
     return true;
 }

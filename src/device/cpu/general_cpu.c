@@ -154,3 +154,19 @@ extern bool cpu_sc_access(general_cpu_t *cpu, ptr36_t addr, int size)
     }
     return cpu->type->sc_access(cpu->data, addr, size);
 }
+
+void cpu_power_on_reset_req(general_cpu_t *cpu, bool internal)
+{
+    if (cpu == NULL) {
+        cpu = get_fallback_cpu();
+    }
+    cpu->type->power_on_reset_req(cpu->data, internal);
+}
+
+void cpu_manual_reset_req(general_cpu_t *cpu)
+{
+    if (cpu == NULL) {
+        cpu = get_fallback_cpu();
+    }
+    cpu->type->manual_reset_req(cpu->data);
+}

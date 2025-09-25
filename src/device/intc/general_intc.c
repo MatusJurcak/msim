@@ -91,3 +91,11 @@ intc_accept_interrupt(general_intc_t * intc) {
     }
     return intc->type->accept_interrupt(intc->data);
 }
+
+void
+intc_init(general_intc_t * intc) {
+    if (intc == NULL) {
+        intc = get_fallback_intc();
+    }
+    intc->type->init(intc->data);
+}

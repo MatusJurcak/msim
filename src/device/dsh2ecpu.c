@@ -33,8 +33,13 @@ static cpu_ops_t const sh2e_cpu_ops = {
     .reg_dump = (reg_dump_func_t) sh2e_cpu_dump_cpu_regs,
     .set_pc = (set_pc_func_t) sh2e_cpu_goto,
 
+    // Interrupts
     .interrupt_up = (interrupt_func_t) sh2e_cpu_assert_interrupt,
     .interrupt_down = (interrupt_func_t) sh2e_cpu_deassert_interrupt,
+
+    // Resets
+    .power_on_reset_req = (power_on_reset_req_func_t) sh2e_cpu_power_on_reset_req,
+    .manual_reset_req = (manual_reset_req_func_t) sh2e_cpu_manual_reset_req,
 };
 
 /** Processor initialization. */
