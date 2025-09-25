@@ -2182,7 +2182,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
             .assembly = "HALT",
             .abstract = "(halt machine)",
             .exec = sh2e_insn_exec_halt,
-            .disasm = sh2e_insn_desc_dump_z_format,
+            .disasm = sh2e_insn_desc_dump_msim_format,
             .cycles = 1,
         };
         return machine_specific_instructions ? &halt : &illegal;
@@ -2194,7 +2194,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
             .assembly = "CPU REG DUMP",
             .abstract = "(cpu registers dump)",
             .exec = sh2e_insn_exec_cpu_reg_dump,
-            .disasm = sh2e_insn_desc_dump_z_format,
+            .disasm = sh2e_insn_desc_dump_msim_format,
             .cycles = 1,
         };
         return machine_specific_instructions ? &cpu_reg_dump : &illegal;
@@ -2206,7 +2206,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
             .assembly = "FPU REG DUMP",
             .abstract = "(fpu registers dump)",
             .exec = sh2e_insn_exec_fpu_reg_dump,
-            .disasm = sh2e_insn_desc_dump_z_format,
+            .disasm = sh2e_insn_desc_dump_msim_format,
             .cycles = 1,
         };
         return machine_specific_instructions ? &fpu_reg_dump : &illegal;

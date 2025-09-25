@@ -13,7 +13,6 @@
 #define SUPERH_SH2E_CPU_H_
 
 #include "insn.h"
-#include "intc.h"
 
 #include "../../../assert.h"
 #include "../../../list.h"
@@ -302,40 +301,6 @@ typedef struct sh2e_fpu_regs {
 } sh2e_fpu_regs_t;
 
 
-/** Main processor structure */
-typedef struct sh2e_cpu {
-
-    sh2e_cpu_regs_t cpu_regs;
-
-    sh2e_fpu_regs_t fpu_regs;
-
-    /* Execution state. */
-
-    /** The next value of PC. Used to implement jumps, branches, and traps. */
-    uint32_t pc_next;
-
-    sh2e_processing_state_t pr_state;
-
-    sh2e_branch_state_t br_state;
-
-    unsigned int id;
-
-    /** Accounting. */
-    uint_fast64_t program_execution_cycles;
-
-    uint_fast64_t power_down_cycles;
-
-    /** Interrupt controller */
-    sh2e_intc_t intc;
-
-    bool disable_interrupts;
-
-    bool disable_address_errors;
-
-    bool pending_address_error;
-} sh2e_cpu_t;
-
-
 /** Exception codes. */
 typedef enum sh2e_exception {
     SH2E_EXCEPTION_CPU_ADDRESS_ERROR,
@@ -345,6 +310,41 @@ typedef enum sh2e_exception {
     __SH2E_EXCEPTION_COUNT,
     SH2E_EXCEPTION_NONE = __SH2E_EXCEPTION_COUNT,
 } sh2e_exception_t;
+
+
+/** Main processor structure */
+typedef struct sh2e_cpu {
+
+    sh2e_cpu_regs_t cpu_regs; /** CPU registers. */
+
+    sh2e_fpu_regs_t fpu_regs; /** FPU registers. */
+
+    /* Execution state. */
+
+    /** The next value of PC. Used to implement jumps, branches, and traps. */
+    uint32_t pc_next;
+
+    sh2e_processing_state_t pr_state; /** Processing state. */
+
+    sh2e_branch_state_t br_state; /** Branch state. */
+
+    unsigned int id; /** CPU ID. */
+
+    /** Accounting. */
+    uint_fast64_t program_execution_cycles;
+
+    uint_fast64_t power_down_cycles;
+
+    bool disable_interrupts; /** Flag used for disabled interrupts instructions. */
+
+    bool disable_address_errors; /** Flag used for disabled address errors instructions. */
+
+    sh2e_exception_t insn_exception; /** Exception caused by the last executed instruction. */
+
+    uint8_t pending_interrupt; /** Source ID of the highest priority pending interrupt. 0 if no pending interrupts. */
+
+    bool pending_address_error; /** Flag indicating a pending address error exception. */
+} sh2e_cpu_t;
 
 /** Instruction implementation. */
 typedef sh2e_exception_t (*sh2e_insn_exec_fn_t)(sh2e_cpu_t * cpu, sh2e_insn_t insn);

@@ -32,6 +32,9 @@ static cpu_ops_t const sh2e_cpu_ops = {
     .convert_addr = (convert_addr_func_t) sh2e_cpu_convert_addr,
     .reg_dump = (reg_dump_func_t) sh2e_cpu_dump_cpu_regs,
     .set_pc = (set_pc_func_t) sh2e_cpu_goto,
+
+    .interrupt_up = (interrupt_func_t) sh2e_cpu_assert_interrupt,
+    .interrupt_down = (interrupt_func_t) sh2e_cpu_deassert_interrupt,
 };
 
 /** Processor initialization. */
@@ -152,34 +155,6 @@ dsh2ecpu_cmd_goto(token_t *parm, device_t *const dev)
     return true;
 }
 
-/** Configure interrupt controller address command. */
-static bool
-dsh2ecpu_cmd_configure_intc_address(token_t *parm, device_t *const dev)
-{
-    ASSERT(dev != NULL);
-
-    uint32_t addr = ALIGN_DOWN(parm_uint_next(&parm), sizeof(uint32_t));
-
-    sh2e_intc_init_regs(device_get_sh2e_cpu(dev), addr);
-
-    return true;
-}
-
-/** Add interrupt source command. */
-static bool
-dsh2ecpu_cmd_add_interrupt_source(token_t *parm, device_t *const dev)
-{
-    ASSERT(dev != NULL);
-
-    uint16_t source_id = parm_uint_next(&parm);
-    uint8_t priority_pool_index = parm_uint_next(&parm);
-    uint8_t priority = parm_uint_next(&parm);
-
-    sh2e_intc_add_interrupt_source(device_get_sh2e_cpu(dev), source_id, priority_pool_index, priority);
-
-    return true;
-}
-
 /** Stat command implementation
  *
  */
@@ -277,22 +252,6 @@ static cmd_t const dsh2ecpu_cmds[] = {
             "Go to address",
             "Go to address",
             REQ INT "addr/address" END },
-    { "intc_address",
-            (fcmd_t) dsh2ecpu_cmd_configure_intc_address,
-            DEFAULT,
-            DEFAULT,
-            "Configure INTC registers addresses",
-            "Configure INTC registers addresses",
-            REQ INT "addr/address" END },
-    { "intc_add",
-            (fcmd_t) dsh2ecpu_cmd_add_interrupt_source,
-            DEFAULT,
-            DEFAULT,
-            "Add interrupt source",
-            "Add interrupt source <source_id> <priority_pool_index> <priority>",
-            REQ INT "source_id" NEXT
-                    REQ INT "priority_pool_index" NEXT
-                            REQ INT "priority" END },
     { "stat",
             (fcmd_t) dsh2ecpu_cmd_stat,
             DEFAULT,
@@ -300,7 +259,7 @@ static cmd_t const dsh2ecpu_cmds[] = {
             "Display CPU statistics",
             "Display CPU statistics",
             NOCMD },
-    { "assert_interrupt",
+    { "assertint",
             (fcmd_t) dsh2ecpu_cmd_assert_interrupt,
             DEFAULT,
             DEFAULT,

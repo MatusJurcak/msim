@@ -38,7 +38,6 @@ SOURCES = \
 	device/cpu/superh_sh2e/disasm.c \
 	device/cpu/superh_sh2e/decode.c \
 	device/cpu/superh_sh2e/debug.c \
-	device/cpu/superh_sh2e/intc.c \
 	device/cpu/mips_r4000/cpu.c \
 	device/cpu/mips_r4000/debug.c \
 	device/cpu/riscv_rv32ima/cpu.c \
@@ -68,6 +67,9 @@ SOURCES = \
 	device/dprinter.c \
 	device/dtime.c \
 	device/device.c \
+	device/dsh2eintc.c \
+	device/intc/general_intc.c \
+	device/intc/superh_sh2e/intc.c \
 	arch/win32/mmap.c \
 	arch/win32/stdin.c \
 	arch/win32/signal.c \
