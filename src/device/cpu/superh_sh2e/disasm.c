@@ -55,6 +55,27 @@ __dump_operation_name(
     return current;
 }
 
+void
+sh2e_insn_desc_dump_msim_format(
+    sh2e_insn_desc_t const * const restrict desc,
+    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, sh2e_insn_t const insn,
+    string_t * const restrict mnemonics, string_t * const restrict comments
+) {
+    string_t s_name;
+    string_init(&s_name);
+
+    char const * current = desc->assembly;
+
+    // Just print the whole instruction description in lowercase.
+    while (*current != '\0') {
+        string_push(&s_name, tolower(*current));
+        current++;
+    }
+
+    string_printf(mnemonics, "%-8s", s_name.str);
+    string_done(&s_name);
+}
+
 //
 
 void
@@ -435,8 +456,8 @@ sh2e_insn_desc_dump_nd8_format(
     char const * format = __dump_operation_name(desc->assembly, mnemonics);
     while (*format != '\0') {
         if (strstr(format, disp_pc_arg) == format) {
-            uint32_t const disp = 2 + zero_extend_8_32(insn.nd8_form.d8);
-            uint32_t const target_addr = addr + disp * scale;
+            uint32_t const disp = zero_extend_8_32(insn.nd8_form.d8);
+            uint32_t const target_addr = (addr & (~(scale - 1))) + 4 + (disp * scale);
             string_printf(mnemonics, "%#010" PRIx32, target_addr);
             format += strlen(disp_pc_arg);
         } else if (strstr(format, rn_arg) == format) {

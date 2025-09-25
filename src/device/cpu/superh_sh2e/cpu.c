@@ -16,6 +16,7 @@
 #include "memops.h"
 
 #include "../../../assert.h"
+#include "../../intc/general_intc.h"
 
 #include <ctype.h>
 #include <inttypes.h>
@@ -166,9 +167,11 @@ sh2e_power_on_reset(sh2e_cpu_t * const restrict cpu) {
     uint32_t eva_pc_addr = (uint32_t) address(&epva->power_on_reset_pc);
     cpu->cpu_regs.pc = sh2e_physmem_read32(cpu->id, eva_pc_addr, false);
 
-    sh2e_intc_init(cpu);
+    // TODO:
+    // sh2e_intc_init(cpu);
 
-    cpu->pr_state = SH2E_PSTATE_POWER_ON_RESET;
+    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
+    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
 
 
@@ -291,7 +294,7 @@ sh2e_cpu_execute_insn(sh2e_cpu_t * const restrict cpu, unsigned int * insn_cycle
 }
 
 static void
-sh2e_cpu_handle_exception(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) {
+sh2e_cpu_handle_exception(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex, bool disable_stacking_exception) {
     cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
     uint32_t vector_addr = 0;
     sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
@@ -339,180 +342,177 @@ sh2e_cpu_handle_exception(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) 
 
     uint32_t const stack_pc_addr = stack_sr_addr - sizeof(uint32_t);
 
-    sh2e_exception_t cpu_write_ex;
+    bool stack_ex = false;
 
-    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_sr_addr, stack_sr);
-    // TODO:  handle address exception during stacking, now just assert
-    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
-        ASSERT(false && "Exception during the stacking of SR");
+    // Push SR to stack
+    if (sh2e_cpu_write_long(cpu, stack_sr_addr, stack_sr) != SH2E_EXCEPTION_NONE) {
+        stack_ex = true;
     }
 
-    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_pc_addr, stack_pc);
-    // TODO:  handle address exception during stacking, now just assert
-    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
-        ASSERT(false && "Exception during the stacking of PC");
+    // Push PC to stack
+    if (sh2e_cpu_write_long(cpu, stack_pc_addr, stack_pc) != SH2E_EXCEPTION_NONE) {
+        stack_ex = true;
     }
 
     cpu->cpu_regs.sp = stack_pc_addr;
-    // TODO: ugly, need to subtract only to add the same value later on
-    cpu->cpu_regs.pc = vector_addr - sizeof(sh2e_insn_t);
+    cpu->cpu_regs.pc = sh2e_physmem_read32(cpu->id, vector_addr, false);
     cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
+
+    // Handle stacking exception immediately (if not disabled)
+    if (stack_ex && !disable_stacking_exception) {
+        sh2e_cpu_handle_exception(cpu, SH2E_EXCEPTION_CPU_ADDRESS_ERROR, true);
+    }
+
+    // Clear the exception
+    cpu->insn_exception = SH2E_EXCEPTION_NONE;
 
     // Go back to program execution state
     cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
 
 static void
-sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu, uint16_t interrupt_source) {
+sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu) {
     cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
-    // Push SR to stack
+
     uint32_t const stack_sr = cpu->cpu_regs.sr.value;
     uint32_t const stack_sr_addr = cpu->cpu_regs.sp - sizeof(uint32_t);
 
-    // Push PC to stack (Address of instruction after executed instruction)
     uint32_t const stack_pc = cpu->pc_next;
     uint32_t const stack_pc_addr = stack_sr_addr - sizeof(uint32_t);
 
-    sh2e_exception_t cpu_write_ex;
+    bool stack_ex = false;
 
-    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_sr_addr, stack_sr);
-    // TODO:  handle address exception during stacking, now just assert
-    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
-        ASSERT(false && "Exception during the stacking of SR");
+    // Push SR to stack
+    if (sh2e_cpu_write_long(cpu, stack_sr_addr, stack_sr) != SH2E_EXCEPTION_NONE) {
+        stack_ex = true;
     }
 
-    cpu_write_ex = sh2e_cpu_write_long(cpu, stack_pc_addr, stack_pc);
-    // TODO:  handle address exception during stacking, now just assert
-    if (cpu_write_ex != SH2E_EXCEPTION_NONE) {
-        ASSERT(false && "Exception during the stacking of PC");
+    // Push PC to stack (Address of instruction after executed instruction)
+    if (sh2e_cpu_write_long(cpu, stack_pc_addr, stack_pc) != SH2E_EXCEPTION_NONE) {
+        stack_ex = true;
     }
 
     sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
 
     cpu->cpu_regs.sp = stack_pc_addr;
 
-    uint32_t eva_pc_addr = (uint32_t) address(&epva->vectors[interrupt_source]);
-    // TODO: ugly, need to subtract only to add the same value later on
-    cpu->cpu_regs.pc = (sh2e_physmem_read32(cpu->id, eva_pc_addr, false) - sizeof(sh2e_insn_t));
+    uint32_t eva_pc_addr = (uint32_t) address(&epva->vectors[cpu->pending_interrupt]);
+    cpu->cpu_regs.pc = sh2e_physmem_read32(cpu->id, eva_pc_addr, false);
     cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
 
-    sh2e_accept_interrupt(cpu, interrupt_source);
+    cpu->cpu_regs.sr.im = (uint32_t) intc_accept_interrupt(NULL);
+
+    // Handle stacking exception immediately
+    if (stack_ex) {
+        sh2e_cpu_handle_exception(cpu, SH2E_EXCEPTION_CPU_ADDRESS_ERROR, true);
+    }
 
     // Go back to program execution state
     cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
-    return;
 }
 
-static void
-sh2e_try_handle_exceptions(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex) {
-    uint16_t interrupt_source = 0;
 
-    // If interrupts are not disabled, check for pending interrupts.
-    if (!cpu->disable_interrupts) {
-        interrupt_source = sh2e_check_pending_interrupts(cpu);
+/****************************************************************************
+ * CPU state steps
+ ****************************************************************************/
+
+/**
+ * @brief Handle one step in the standby state.
+ */
+static void
+sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    cpu->pending_interrupt = intc_check_interrupts(NULL, cpu->cpu_regs.sr.im);
+
+    if (cpu->pending_interrupt) {
+        cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
     }
 
+    // Accounting
+    cpu->power_down_cycles++;
+}
+
+
+/**
+ * @brief Handle one step in the reset state.
+ */
+static void
+sh2e_reset_state_step(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    sh2e_power_on_reset(cpu);
+}
+
+
+/**
+ * @brief Handle one step in the exception processing state.
+ */
+static void
+sh2e_exception_state_step(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
     // Check if address errors are disabled.
-    if (cpu->disable_address_errors && ex == SH2E_EXCEPTION_CPU_ADDRESS_ERROR) {
+    if (cpu->disable_address_errors && cpu->insn_exception == SH2E_EXCEPTION_CPU_ADDRESS_ERROR) {
         cpu->pending_address_error = true;
-        ex = SH2E_EXCEPTION_NONE;
+        cpu->insn_exception = SH2E_EXCEPTION_NONE;
     }
 
     // Exception Processing Priority Order:
     // - CPU address error
-    if ((cpu->pending_address_error || ex == SH2E_EXCEPTION_CPU_ADDRESS_ERROR) && !cpu->disable_address_errors) {
+    if ((cpu->pending_address_error || cpu->insn_exception == SH2E_EXCEPTION_CPU_ADDRESS_ERROR) && !cpu->disable_address_errors) {
         cpu->pending_address_error = false;
-        sh2e_cpu_handle_exception(cpu, SH2E_EXCEPTION_CPU_ADDRESS_ERROR);
+        sh2e_cpu_handle_exception(cpu, SH2E_EXCEPTION_CPU_ADDRESS_ERROR, false);
         return;
     }
 
     // - FPU exception
-    if (ex == SH2E_EXCEPTION_FPU_OPERATION) {
-        sh2e_cpu_handle_exception(cpu, ex);
+    if (cpu->insn_exception == SH2E_EXCEPTION_FPU_OPERATION) {
+        sh2e_cpu_handle_exception(cpu, cpu->insn_exception, false);
         return;
     }
 
     // - Interrupts
-    if (interrupt_source) {
-        sh2e_cpu_handle_interrupt(cpu, interrupt_source);
+    if (cpu->pending_interrupt) {
+        sh2e_cpu_handle_interrupt(cpu);
         return;
     }
 
     // - General illegal instructions
     // - Illegal slot instructions
-    if (ex != SH2E_EXCEPTION_NONE) {
-        sh2e_cpu_handle_exception(cpu, ex);
+    if (cpu->insn_exception != SH2E_EXCEPTION_NONE) {
+        sh2e_cpu_handle_exception(cpu, cpu->insn_exception, false);
     }
 }
 
+/**
+ * @brief Handle one step in the program execution state.
+ */
 static void
-sh2e_cpu_account(sh2e_cpu_t * const restrict cpu, unsigned int insn_cycles) {
+sh2e_program_execution_state_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
 
-    if (cpu->pr_state == SH2E_PSTATE_POWER_DOWN) {
-        cpu->power_down_cycles++;
-    }
-
-    if (cpu->pr_state == SH2E_PSTATE_PROGRAM_EXECUTION) {
-        cpu->program_execution_cycles += insn_cycles;
-    }
-}
-
-/****************************************************************************
- * SH-2E CPU
- ****************************************************************************/
-
-/** @brief Initialize the processor after power-on. */
-void
-sh2e_cpu_init(sh2e_cpu_t * const restrict cpu, unsigned int id) {
-    ASSERT(cpu != NULL);
-
-    memset(cpu, 0, sizeof(sh2e_cpu_t));
-    cpu->id = id;
-
-    // Requires 'id' to be set.
-    sh2e_power_on_reset(cpu);
-
-    // Execution state.
-    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
-    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
-}
-
-
-/** @brief Cleanup CPU structures. */
-void
-sh2e_cpu_done(sh2e_cpu_t * const restrict cpu) {
-    ASSERT(cpu != NULL);
-
-    // Clean the entire instruction cache.
-    while (!is_empty(&sh2e_insn_cache)) {
-        cache_item_t * cache_item = (cache_item_t *) (sh2e_insn_cache.head);
-        list_remove(&sh2e_insn_cache, &cache_item->item);
-        safe_free(cache_item);
-    }
-}
-
-
-/** @brief Execute one instruction. */
-void
-sh2e_cpu_step(sh2e_cpu_t * const restrict cpu) {
-    ASSERT(cpu != NULL);
-
-    sh2e_exception_t ex = SH2E_EXCEPTION_NONE;
     unsigned int insn_cycles = 0;
 
     if (cpu->pr_state != SH2E_PSTATE_POWER_DOWN) {
-        ex = sh2e_cpu_execute_insn(cpu, &insn_cycles);
+        cpu->insn_exception = sh2e_cpu_execute_insn(cpu, &insn_cycles);
     }
 
-    sh2e_try_handle_exceptions(cpu, ex);
+    // If interrupts are not disabled, check for pending interrupts.
+    if (!cpu->disable_interrupts) {
+        cpu->pending_interrupt = intc_check_interrupts(NULL, cpu->cpu_regs.sr.im);
+    }
+
+    // Go to exception processing state if there is an exception or a pending interrupt.
+    if (cpu->insn_exception != SH2E_EXCEPTION_NONE || cpu->pending_interrupt) {
+        cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
+    }
 
     // Accounting
-    sh2e_cpu_account(cpu, insn_cycles);
+    cpu->program_execution_cycles += insn_cycles;
 
     // Update program counter (respect delay slots).
-    if (cpu->pr_state != SH2E_PSTATE_POWER_DOWN) {
-
+    if (cpu->pr_state == SH2E_PSTATE_PROGRAM_EXECUTION) {
         switch (cpu->br_state) {
         case SH2E_BRANCH_STATE_DELAY: // Delay branch instruction.
             cpu->br_state = SH2E_BRANCH_STATE_EXECUTE;
@@ -534,6 +534,63 @@ sh2e_cpu_step(sh2e_cpu_t * const restrict cpu) {
     }
 }
 
+/****************************************************************************
+ * SH-2E CPU
+ ****************************************************************************/
+
+/** @brief Initialize the processor after power-on. */
+void
+sh2e_cpu_init(sh2e_cpu_t * const restrict cpu, unsigned int id) {
+    ASSERT(cpu != NULL);
+
+    memset(cpu, 0, sizeof(sh2e_cpu_t));
+    cpu->id = id;
+
+    cpu->pr_state = SH2E_PSTATE_POWER_ON_RESET;
+}
+
+
+/** @brief Cleanup CPU structures. */
+void
+sh2e_cpu_done(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    // Clean the entire instruction cache.
+    while (!is_empty(&sh2e_insn_cache)) {
+        cache_item_t * cache_item = (cache_item_t *) (sh2e_insn_cache.head);
+        list_remove(&sh2e_insn_cache, &cache_item->item);
+        safe_free(cache_item);
+    }
+}
+
+
+/** @brief Execute the next cpu step depending on the current cpu state. */
+void
+sh2e_cpu_step(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    switch (cpu->pr_state) {
+    case SH2E_PSTATE_POWER_ON_RESET:
+        sh2e_reset_state_step(cpu);
+        break;
+    case SH2E_PSTATE_EXCEPTION_PROCESSING:
+        sh2e_exception_state_step(cpu);
+        break;
+    case SH2E_PSTATE_PROGRAM_EXECUTION:
+        sh2e_program_execution_state_step(cpu);
+        break;
+    case SH2E_PSTATE_POWER_DOWN:
+        sh2e_standby_state_step(cpu);
+        break;
+    case SH2E_PSTATE_BUS_RELEASE:
+        // Nothing
+        break;
+
+    default:
+        ASSERT(false && "invalid CPU processing state");
+    }
+}
+
 
 /** @brief Set the address of the next instruction to execute. */
 void
@@ -551,30 +608,12 @@ sh2e_cpu_goto(sh2e_cpu_t * const restrict cpu, ptr64_t const addr) {
 /** Assert the specified interrupt. */
 void
 sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
-    ASSERT(cpu != NULL);
-    ASSERT(num >= INTC_SOURCE_MIN_VALUE && "Interrupt number out of range");
-    for (unsigned int i = 0; i < cpu->intc.pool.count; i++) {
-        if (cpu->intc.pool.sources[i].source_id == num) {
-            cpu->intc.pool.sources[i].pending = true;
-            return;
-        }
-    }
-
-    ASSERT(false && "Interrupt source not found!");
+    intc_interrupt_up(NULL, num);
 }
 
 
 /** Deassert the specified interrupt */
 void
 sh2e_cpu_deassert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
-    ASSERT(cpu != NULL);
-    ASSERT(num >= INTC_SOURCE_MIN_VALUE && "Interrupt number out of range");
-    for (unsigned int i = 0; i < cpu->intc.pool.count; i++) {
-        if (cpu->intc.pool.sources[i].source_id == num) {
-            cpu->intc.pool.sources[i].pending = false;
-            return;
-        }
-    }
-
-    ASSERT(false && "Interrupt source not found!");
+    intc_interrupt_down(NULL, num);
 }

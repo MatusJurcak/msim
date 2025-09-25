@@ -23,6 +23,7 @@
 
 // Instruction disassembly functions
 
+extern void sh2e_insn_desc_dump_msim_format(sh2e_insn_desc_t const * desc, sh2e_cpu_t const * cpu, uint32_t addr, sh2e_insn_t insn, string_t * mnemonics, string_t * comments);
 extern void sh2e_insn_desc_dump_z_format(sh2e_insn_desc_t const * desc, sh2e_cpu_t const * cpu, uint32_t addr, sh2e_insn_t insn, string_t * mnemonics, string_t * comments);
 extern void sh2e_insn_desc_dump_n_format(sh2e_insn_desc_t const * desc, sh2e_cpu_t const * cpu, uint32_t addr, sh2e_insn_t insn, string_t * mnemonics, string_t * comments);
 extern void sh2e_insn_desc_dump_n_format_fpu(sh2e_insn_desc_t const * desc, sh2e_cpu_t const * cpu, uint32_t addr, sh2e_insn_t insn, string_t * mnemonics, string_t * comments);
