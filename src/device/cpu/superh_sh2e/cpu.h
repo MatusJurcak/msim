@@ -60,6 +60,7 @@ typedef union {
 
 typedef enum sh2e_processing_state {
     SH2E_PSTATE_POWER_ON_RESET,
+    SH2E_PSTATE_MANUAL_RESET,
     SH2E_PSTATE_EXCEPTION_PROCESSING,
     SH2E_PSTATE_BUS_RELEASE,
     SH2E_PSTATE_PROGRAM_EXECUTION,
@@ -311,6 +312,19 @@ typedef enum sh2e_exception {
     SH2E_EXCEPTION_NONE = __SH2E_EXCEPTION_COUNT,
 } sh2e_exception_t;
 
+/** Power-on reset request types. */
+typedef enum sh2e_power_on_reset_req {
+    SH2E_POWER_ON_RESET_REQ_NONE,
+    SH2E_POWER_ON_RESET_REQ_INTERNAL,
+    SH2E_POWER_ON_RESET_REQ_EXTERNAL,
+    SH2E_POWER_ON_RESET_INITIAL, /* Initial power-on reset. */
+} sh2e_power_on_reset_req_t;
+
+/** Manual reset request types. */
+typedef enum sh2e_manual_reset_req {
+    SH2E_MANUAL_RESET_REQ_NONE,
+    SH2E_MANUAL_RESET_REQ,
+} sh2e_manual_reset_req_t;
 
 /** Main processor structure */
 typedef struct sh2e_cpu {
@@ -335,6 +349,7 @@ typedef struct sh2e_cpu {
 
     uint_fast64_t power_down_cycles;
 
+    /** Flags for exceptions/interrupts */
     bool disable_interrupts; /** Flag used for disabled interrupts instructions. */
 
     bool disable_address_errors; /** Flag used for disabled address errors instructions. */
@@ -344,6 +359,10 @@ typedef struct sh2e_cpu {
     uint8_t pending_interrupt; /** Source ID of the highest priority pending interrupt. 0 if no pending interrupts. */
 
     bool pending_address_error; /** Flag indicating a pending address error exception. */
+
+    /** Flags for resets */
+    sh2e_power_on_reset_req_t power_on_reset_req; /** Flag indicating a pending power-on reset request. */
+    sh2e_manual_reset_req_t manual_reset_req; /** Flag indicating a pending manual reset request. */
 } sh2e_cpu_t;
 
 /** Instruction implementation. */
@@ -433,5 +452,9 @@ extern sh2e_exception_t sh2e_cpu_fetch_insn(sh2e_cpu_t const * cpu, uint32_t add
 /** Interrupts */
 extern void sh2e_cpu_assert_interrupt(sh2e_cpu_t * cpu, unsigned int num);
 extern void sh2e_cpu_deassert_interrupt(sh2e_cpu_t * cpu, unsigned int num);
+
+/** Resets */
+extern void sh2e_cpu_power_on_reset_req(sh2e_cpu_t * cpu, bool internal);
+extern void sh2e_cpu_manual_reset_req(sh2e_cpu_t * cpu);
 
 #endif // SUPERH_SH2E_CPU_H_

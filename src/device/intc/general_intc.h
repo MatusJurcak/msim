@@ -14,6 +14,8 @@ typedef void (*interrupt_func_t)(void *, unsigned int);
 typedef uint8_t (*check_interrupts_func_t)(void *, uint8_t);
 /** Function type for accepting interrupt */
 typedef uint8_t (*accept_interrupt_func_t)(void *);
+/** Function type for initializing the INTC */
+typedef void (*init_intc_func_t)(void *);
 
 typedef struct {
     interrupt_func_t interrupt_up; /** Raise an interrupt */
@@ -21,6 +23,8 @@ typedef struct {
 
     check_interrupts_func_t check_interrupts; /** Check for pending interrupts */
     accept_interrupt_func_t accept_interrupt; /** Accept an interrupt */
+
+    init_intc_func_t init; /** Initialize the INTC */
 } intc_ops_t;
 
 /** Structure describing INTC methods */
@@ -69,5 +73,7 @@ extern void intc_interrupt_down(general_intc_t * intc, unsigned int no);
 extern uint8_t intc_check_interrupts(general_intc_t * intc, uint8_t mask);
 
 extern uint8_t intc_accept_interrupt(general_intc_t * intc);
+
+extern void intc_init(general_intc_t * intc);
 
 #endif // GENERAL_INTC_H_

@@ -140,41 +140,6 @@ sh2e_set_pc(sh2e_cpu_t * const restrict cpu, uint32_t const addr) {
 
 #define address(ptr) (uintptr_t) (ptr)
 
-/** Sets initial values of registers. */
-static void
-sh2e_power_on_reset(sh2e_cpu_t * const restrict cpu) {
-    ASSERT(cpu != NULL);
-
-    // Registers with defined values.
-
-    cpu->cpu_regs.vbr = 0x00000000;
-
-    cpu->cpu_regs.sr.value = 0;
-    cpu->cpu_regs.sr.im = 0b1111;
-
-    cpu->fpu_regs.fpscr.value = 0;
-    cpu->fpu_regs.fpscr.dn = 1;
-    cpu->fpu_regs.fpscr.rm = 0b01;
-
-    // Registers with derived values.
-    // Ignore exceptions when loading register values from EPVA.
-
-    sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
-
-    uint32_t eva_sp_addr = (uint32_t) address(&epva->power_on_reset_sp);
-    cpu->cpu_regs.sp = sh2e_physmem_read32(cpu->id, eva_sp_addr, false);
-
-    uint32_t eva_pc_addr = (uint32_t) address(&epva->power_on_reset_pc);
-    cpu->cpu_regs.pc = sh2e_physmem_read32(cpu->id, eva_pc_addr, false);
-
-    // TODO:
-    // sh2e_intc_init(cpu);
-
-    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
-    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
-}
-
-
 /****************************************************************************
  * Instruction decode cache
  ****************************************************************************/
@@ -411,6 +376,67 @@ sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu) {
     cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
 
+static bool
+sh2e_cpu_check_reset_req(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    // Check for power-on reset request.
+    if (cpu->power_on_reset_req != SH2E_POWER_ON_RESET_REQ_NONE) {
+        cpu->pr_state = SH2E_PSTATE_POWER_ON_RESET;
+        return true;
+    }
+
+    // Check for manual reset request.
+    if (cpu->manual_reset_req == SH2E_MANUAL_RESET_REQ) {
+        cpu->pr_state = SH2E_PSTATE_MANUAL_RESET;
+        return true;
+    }
+
+    return false;
+}
+
+static void
+sh2e_cpu_reset(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    // Registers with defined values.
+
+    cpu->cpu_regs.vbr = 0x00000000;
+
+    cpu->cpu_regs.sr.value = 0;
+    cpu->cpu_regs.sr.im = 0b1111;
+
+    cpu->fpu_regs.fpscr.value = 0;
+    cpu->fpu_regs.fpscr.dn = 1;
+    cpu->fpu_regs.fpscr.rm = 0b01;
+
+    // Registers with derived values.
+    // Ignore exceptions when loading register values from EPVA.
+
+    uint32_t eva_sp_addr = 0;
+    uint32_t eva_pc_addr = 0;
+
+    sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
+
+    if (cpu->pr_state == SH2E_PSTATE_POWER_ON_RESET) {
+        eva_pc_addr = (uint32_t) address(&epva->power_on_reset_pc);
+        eva_sp_addr = (uint32_t) address(&epva->power_on_reset_sp);
+    } else {
+        eva_pc_addr = (uint32_t) address(&epva->manual_reset_pc);
+        eva_sp_addr = (uint32_t) address(&epva->manual_reset_sp);
+    }
+
+    cpu->cpu_regs.sp = sh2e_physmem_read32(cpu->id, eva_sp_addr, false);
+    cpu->cpu_regs.pc = sh2e_physmem_read32(cpu->id, eva_pc_addr, false);
+
+    cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
+
+    // Initialize INTC (only if this is not the initial power-on reset because we want to keep the values from config).
+    if (cpu->power_on_reset_req != SH2E_POWER_ON_RESET_INITIAL) {
+        intc_init(NULL);
+    }
+}
+
 
 /****************************************************************************
  * CPU state steps
@@ -423,6 +449,11 @@ static void
 sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
 
+    // Check for reset requests.
+    if (sh2e_cpu_check_reset_req(cpu)) {
+        return;
+    }
+
     cpu->pending_interrupt = intc_check_interrupts(NULL, cpu->cpu_regs.sr.im);
 
     if (cpu->pending_interrupt) {
@@ -433,17 +464,46 @@ sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
     cpu->power_down_cycles++;
 }
 
-
 /**
- * @brief Handle one step in the reset state.
+ * @brief Handle one step in the power-on reset state.
+ *
+ * @param cpu The CPU instance.
+ * @param internal If `true`, the reset was triggered internally (e.g., watchdog). If the reset is internal, then the PFC/IO Port is not re-initialized.
  */
 static void
-sh2e_reset_state_step(sh2e_cpu_t * const restrict cpu) {
+sh2e_power_on_reset_state_step(sh2e_cpu_t * const restrict cpu, bool internal) {
     ASSERT(cpu != NULL);
 
-    sh2e_power_on_reset(cpu);
+    // Initialize CPU/FPU and INTC
+    sh2e_cpu_reset(cpu);
+
+    // TODO: Initialize On-Chip Peripherals
+
+    if (!internal) {
+        // TODO: Initialize PFC/IO Port
+    }
+
+    // Clear the request
+    cpu->power_on_reset_req = SH2E_POWER_ON_RESET_REQ_NONE;
+    // Clear the manual reset request as well (if any)
+    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ_NONE;
+    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
 
+/**
+ * @brief Handle one step in the manual reset state.
+ */
+static void
+sh2e_manual_reset_state_step(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    // Initialize only CPU/FPU and INTC
+    sh2e_cpu_reset(cpu);
+
+    // Clear the request
+    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ_NONE;
+    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
+}
 
 /**
  * @brief Handle one step in the exception processing state.
@@ -491,6 +551,11 @@ sh2e_exception_state_step(sh2e_cpu_t * const restrict cpu) {
 static void
 sh2e_program_execution_state_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
+
+    // Check for reset requests.
+    if (sh2e_cpu_check_reset_req(cpu)) {
+        return;
+    }
 
     unsigned int insn_cycles = 0;
 
@@ -547,6 +612,8 @@ sh2e_cpu_init(sh2e_cpu_t * const restrict cpu, unsigned int id) {
     cpu->id = id;
 
     cpu->pr_state = SH2E_PSTATE_POWER_ON_RESET;
+    cpu->power_on_reset_req = SH2E_POWER_ON_RESET_INITIAL;
+    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ_NONE;
 }
 
 
@@ -571,7 +638,10 @@ sh2e_cpu_step(sh2e_cpu_t * const restrict cpu) {
 
     switch (cpu->pr_state) {
     case SH2E_PSTATE_POWER_ON_RESET:
-        sh2e_reset_state_step(cpu);
+        sh2e_power_on_reset_state_step(cpu, cpu->power_on_reset_req == SH2E_POWER_ON_RESET_REQ_INTERNAL);
+        break;
+    case SH2E_PSTATE_MANUAL_RESET:
+        sh2e_manual_reset_state_step(cpu);
         break;
     case SH2E_PSTATE_EXCEPTION_PROCESSING:
         sh2e_exception_state_step(cpu);
@@ -616,4 +686,20 @@ sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
 void
 sh2e_cpu_deassert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
     intc_interrupt_down(NULL, num);
+}
+
+/** Request a power-on reset */
+void
+sh2e_cpu_power_on_reset_req(sh2e_cpu_t * const restrict cpu, bool internal) {
+    ASSERT(cpu != NULL);
+
+    cpu->power_on_reset_req = internal ? SH2E_POWER_ON_RESET_REQ_INTERNAL : SH2E_POWER_ON_RESET_REQ_EXTERNAL;
+}
+
+/** Request a manual reset */
+void
+sh2e_cpu_manual_reset_req(sh2e_cpu_t * const restrict cpu) {
+    ASSERT(cpu != NULL);
+
+    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ;
 }

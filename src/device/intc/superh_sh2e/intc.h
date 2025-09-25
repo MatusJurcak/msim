@@ -151,11 +151,12 @@ typedef struct sh2e_intc {
 
 } sh2e_intc_t;
 
-extern void sh2e_intc_reset(sh2e_intc_t * intc);
 
 extern void sh2e_intc_init(sh2e_intc_t * intc, unsigned int id);
 
-extern void sh2e_intc_init_regs(sh2e_intc_t * intc, uint32_t regs_addr);
+extern void sh2e_intc_init_regs(sh2e_intc_t * intc);
+
+extern void sh2e_intc_change_regs_address(sh2e_intc_t * intc, uint32_t regs_addr);
 
 extern void sh2e_intc_done(sh2e_intc_t * intc);
 

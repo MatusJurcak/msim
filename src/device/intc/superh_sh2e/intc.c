@@ -44,10 +44,8 @@ sh2e_intc_priority_register_write(sh2e_intc_t * intc, uint8_t index, uint16_t va
 }
 
 void
-sh2e_intc_init_regs(sh2e_intc_t * intc, uint32_t regs_addr) {
+sh2e_intc_init_regs(sh2e_intc_t * intc) {
     ASSERT(intc != NULL);
-
-    intc->intc_regs = (sh2e_intc_regs_t *) (address(regs_addr));
 
     /** Setup the priority registers */
     for (size_t i = 0; i < INTC_IPR_REGISTERS_COUNT; i++) {
@@ -61,20 +59,25 @@ sh2e_intc_init_regs(sh2e_intc_t * intc, uint32_t regs_addr) {
 }
 
 void
-sh2e_intc_reset(sh2e_intc_t * intc) {
-    ASSERT(intc != NULL);
-
-    sh2e_intc_init_regs(intc, INTC_REGISTERS_START_ADDRESS);
-}
-
-void
 sh2e_intc_init(sh2e_intc_t * intc, unsigned int id) {
     memset(intc, 0, sizeof(sh2e_intc_t));
 
     intc->id = id;
 
-    sh2e_intc_reset(intc);
+    intc->intc_regs = (sh2e_intc_regs_t *) (address(INTC_REGISTERS_START_ADDRESS));
+
+    sh2e_intc_init_regs(intc);
 }
+
+void
+sh2e_intc_change_regs_address(sh2e_intc_t * intc, uint32_t regs_addr) {
+    ASSERT(intc != NULL);
+
+    intc->intc_regs = (sh2e_intc_regs_t *) (address(regs_addr));
+
+    sh2e_intc_init_regs(intc);
+}
+
 
 void
 sh2e_intc_done(sh2e_intc_t * intc) {
@@ -95,7 +98,7 @@ sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id, uint8_t pr
     }
 
     intc->sources[source_id].priority_pool_index = priority_pool_index;
-    intc->sources[source_id].pending = true;
+    intc->sources[source_id].pending = false;
     intc->sources[source_id].registered = true;
 
     uint16_t priority_register = sh2e_intc_priority_register_read(intc, priority_pool_index / 4);
