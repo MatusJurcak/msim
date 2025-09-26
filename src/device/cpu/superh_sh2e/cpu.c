@@ -16,7 +16,7 @@
 #include "memops.h"
 
 #include "../../../assert.h"
-#include "../../intc/general_intc.h"
+#include "../../intc/superh_sh2e/intc.h"
 
 #include <ctype.h>
 #include <inttypes.h>
@@ -365,13 +365,19 @@ sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu) {
     cpu->cpu_regs.pc = sh2e_physmem_read32(cpu->id, eva_pc_addr, false);
     cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
 
-    cpu->cpu_regs.sr.im = (uint32_t) intc_accept_interrupt(NULL);
+    uint32_t new_mask = 0;
+
+    intc_accept_interrupt(cpu->intc, &new_mask);
+
+    cpu->cpu_regs.sr.im = new_mask;
 
     // Handle stacking exception immediately
     if (stack_ex) {
         sh2e_cpu_handle_exception(cpu, SH2E_EXCEPTION_CPU_ADDRESS_ERROR, true);
     }
 
+    // Clear the pending interrupt
+    cpu->pending_interrupt = 0;
     // Go back to program execution state
     cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
@@ -380,19 +386,30 @@ static bool
 sh2e_cpu_check_reset_req(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
 
-    // Check for power-on reset request.
-    if (cpu->power_on_reset_req != SH2E_POWER_ON_RESET_REQ_NONE) {
-        cpu->pr_state = SH2E_PSTATE_POWER_ON_RESET;
-        return true;
+    uint8_t reset = 0;
+    bool reset_pending = intc_check_resets(cpu->intc, &reset);
+
+    if (!reset_pending) {
+        return false;
     }
 
-    // Check for manual reset request.
-    if (cpu->manual_reset_req == SH2E_MANUAL_RESET_REQ) {
-        cpu->pr_state = SH2E_PSTATE_MANUAL_RESET;
-        return true;
+    switch (reset) {
+    case SH2E_INTC_POWER_ON_RESET_EXTERNAL_OFFSET: // Power-on reset (external)
+        cpu->reset_req = SH2E_POWER_ON_RESET_REQ_EXTERNAL;
+        break;
+    case SH2E_INTC_POWER_ON_RESET_INTERNAL_OFFSET: // Power-on reset (internal)
+        cpu->reset_req = SH2E_POWER_ON_RESET_REQ_INTERNAL;
+        break;
+    case SH2E_INTC_MANUAL_RESET_OFFSET: // Manual reset
+        cpu->reset_req = SH2E_MANUAL_RESET_REQ;
+        break;
+    default:
+        alert("Unknown reset request %u", reset);
     }
 
-    return false;
+    cpu->pr_state = SH2E_PSTATE_RESET;
+
+    return true;
 }
 
 static void
@@ -418,12 +435,19 @@ sh2e_cpu_reset(sh2e_cpu_t * const restrict cpu) {
 
     sh2e_eva_t * epva = (sh2e_eva_t *) address(cpu->cpu_regs.vbr);
 
-    if (cpu->pr_state == SH2E_PSTATE_POWER_ON_RESET) {
+    switch (cpu->reset_req) {
+    case SH2E_POWER_ON_RESET_REQ_INTERNAL:
+    case SH2E_POWER_ON_RESET_REQ_EXTERNAL:
+    case SH2E_POWER_ON_RESET_INITIAL:
         eva_pc_addr = (uint32_t) address(&epva->power_on_reset_pc);
         eva_sp_addr = (uint32_t) address(&epva->power_on_reset_sp);
-    } else {
+        break;
+    case SH2E_MANUAL_RESET_REQ:
         eva_pc_addr = (uint32_t) address(&epva->manual_reset_pc);
         eva_sp_addr = (uint32_t) address(&epva->manual_reset_sp);
+        break;
+    default:
+        alert("Unknown reset request type %d", cpu->reset_req);
     }
 
     cpu->cpu_regs.sp = sh2e_physmem_read32(cpu->id, eva_sp_addr, false);
@@ -432,8 +456,8 @@ sh2e_cpu_reset(sh2e_cpu_t * const restrict cpu) {
     cpu->pc_next = cpu->cpu_regs.pc + sizeof(sh2e_insn_t);
 
     // Initialize INTC (only if this is not the initial power-on reset because we want to keep the values from config).
-    if (cpu->power_on_reset_req != SH2E_POWER_ON_RESET_INITIAL) {
-        intc_init(NULL);
+    if (cpu->reset_req != SH2E_POWER_ON_RESET_INITIAL) {
+        intc_init(cpu->intc);
     }
 }
 
@@ -454,9 +478,12 @@ sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
         return;
     }
 
-    cpu->pending_interrupt = intc_check_interrupts(NULL, cpu->cpu_regs.sr.im);
+    uint8_t interrupt_source = 0;
 
-    if (cpu->pending_interrupt) {
+    bool interrupt_pending = intc_check_interrupts(cpu->intc, cpu->cpu_regs.sr.im, &interrupt_source);
+
+    if (interrupt_pending) {
+        cpu->pending_interrupt = interrupt_source;
         cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
     }
 
@@ -465,43 +492,27 @@ sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
 }
 
 /**
- * @brief Handle one step in the power-on reset state.
+ * @brief Handle one step in the reset state.
  *
  * @param cpu The CPU instance.
- * @param internal If `true`, the reset was triggered internally (e.g., watchdog). If the reset is internal, then the PFC/IO Port is not re-initialized.
  */
 static void
-sh2e_power_on_reset_state_step(sh2e_cpu_t * const restrict cpu, bool internal) {
+sh2e_reset_state_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
+
+    intc_accept_reset(cpu->intc);
 
     // Initialize CPU/FPU and INTC
     sh2e_cpu_reset(cpu);
 
     // TODO: Initialize On-Chip Peripherals
 
-    if (!internal) {
+    if (cpu->reset_req == SH2E_POWER_ON_RESET_REQ_EXTERNAL) {
         // TODO: Initialize PFC/IO Port
     }
 
     // Clear the request
-    cpu->power_on_reset_req = SH2E_POWER_ON_RESET_REQ_NONE;
-    // Clear the manual reset request as well (if any)
-    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ_NONE;
-    cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
-}
-
-/**
- * @brief Handle one step in the manual reset state.
- */
-static void
-sh2e_manual_reset_state_step(sh2e_cpu_t * const restrict cpu) {
-    ASSERT(cpu != NULL);
-
-    // Initialize only CPU/FPU and INTC
-    sh2e_cpu_reset(cpu);
-
-    // Clear the request
-    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ_NONE;
+    cpu->reset_req = SH2E_RESET_REQ_NONE;
     cpu->pr_state = SH2E_PSTATE_PROGRAM_EXECUTION;
 }
 
@@ -565,7 +576,13 @@ sh2e_program_execution_state_step(sh2e_cpu_t * const restrict cpu) {
 
     // If interrupts are not disabled, check for pending interrupts.
     if (!cpu->disable_interrupts) {
-        cpu->pending_interrupt = intc_check_interrupts(NULL, cpu->cpu_regs.sr.im);
+
+        uint8_t interrupt_source = 0;
+        bool interrupt_pending = intc_check_interrupts(cpu->intc, cpu->cpu_regs.sr.im, &interrupt_source);
+
+        if (interrupt_pending) {
+            cpu->pending_interrupt = interrupt_source;
+        }
     }
 
     // Go to exception processing state if there is an exception or a pending interrupt.
@@ -611,9 +628,8 @@ sh2e_cpu_init(sh2e_cpu_t * const restrict cpu, unsigned int id) {
     memset(cpu, 0, sizeof(sh2e_cpu_t));
     cpu->id = id;
 
-    cpu->pr_state = SH2E_PSTATE_POWER_ON_RESET;
-    cpu->power_on_reset_req = SH2E_POWER_ON_RESET_INITIAL;
-    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ_NONE;
+    cpu->pr_state = SH2E_PSTATE_RESET;
+    cpu->reset_req = SH2E_POWER_ON_RESET_INITIAL;
 }
 
 
@@ -637,11 +653,8 @@ sh2e_cpu_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
 
     switch (cpu->pr_state) {
-    case SH2E_PSTATE_POWER_ON_RESET:
-        sh2e_power_on_reset_state_step(cpu, cpu->power_on_reset_req == SH2E_POWER_ON_RESET_REQ_INTERNAL);
-        break;
-    case SH2E_PSTATE_MANUAL_RESET:
-        sh2e_manual_reset_state_step(cpu);
+    case SH2E_PSTATE_RESET:
+        sh2e_reset_state_step(cpu);
         break;
     case SH2E_PSTATE_EXCEPTION_PROCESSING:
         sh2e_exception_state_step(cpu);
@@ -678,28 +691,12 @@ sh2e_cpu_goto(sh2e_cpu_t * const restrict cpu, ptr64_t const addr) {
 /** Assert the specified interrupt. */
 void
 sh2e_cpu_assert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
-    intc_interrupt_up(NULL, num);
+    intc_interrupt_up(cpu->intc, num);
 }
 
 
 /** Deassert the specified interrupt */
 void
 sh2e_cpu_deassert_interrupt(sh2e_cpu_t * const restrict cpu, unsigned int num) {
-    intc_interrupt_down(NULL, num);
-}
-
-/** Request a power-on reset */
-void
-sh2e_cpu_power_on_reset_req(sh2e_cpu_t * const restrict cpu, bool internal) {
-    ASSERT(cpu != NULL);
-
-    cpu->power_on_reset_req = internal ? SH2E_POWER_ON_RESET_REQ_INTERNAL : SH2E_POWER_ON_RESET_REQ_EXTERNAL;
-}
-
-/** Request a manual reset */
-void
-sh2e_cpu_manual_reset_req(sh2e_cpu_t * const restrict cpu) {
-    ASSERT(cpu != NULL);
-
-    cpu->manual_reset_req = SH2E_MANUAL_RESET_REQ;
+    intc_interrupt_down(cpu->intc, num);
 }

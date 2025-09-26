@@ -31,10 +31,6 @@ typedef void (*reg_dump_func_t)(void *);
 typedef void (*set_pc_func_t)(void *, ptr64_t);
 /** Function type for notifying the processor about a write to a memory location, used for implementing SC atomic*/
 typedef bool (*sc_access_func_t)(void *, ptr36_t, int);
-/** Function type for requesting a power-on reset of the cpu */
-typedef void (*power_on_reset_req_func_t)(void *, bool);
-/** Function type for requesting a manual reset of the cpu */
-typedef void (*manual_reset_req_func_t)(void *);
 
 /** Cpu method table
  *
@@ -49,8 +45,6 @@ typedef struct {
     reg_dump_func_t reg_dump;
     set_pc_func_t set_pc;
     sc_access_func_t sc_access;
-    power_on_reset_req_func_t power_on_reset_req; /** Request a power-on reset */
-    manual_reset_req_func_t manual_reset_req; /** Request a manual reset */
 } cpu_ops_t;
 
 /** Structure describing CPU methods */
@@ -126,18 +120,5 @@ extern void cpu_set_pc(general_cpu_t *cpu, ptr64_t pc);
  * @return whether the address was linked/reserved
  */
 extern bool cpu_sc_access(general_cpu_t *cpu, ptr36_t addr, int size);
-
-/**
- * @brief Requests a power-on reset of the cpu
- *
- * @param cpu the processor pointer
- * @param internal If `true`, the reset was triggered internally (e.g., watchdog).
- */
-extern void cpu_power_on_reset_req(general_cpu_t *cpu, bool internal);
-
-/**
- * @brief Requests a manual reset of the cpu
- */
-extern void cpu_manual_reset_req(general_cpu_t *cpu);
 
 #endif // GENERAL_CPU_H_
