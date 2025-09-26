@@ -20,28 +20,30 @@
 #define PACKED __attribute__((packed))
 #endif
 
-#define INTC_REGISTERS_START_ADDRESS UINT32_C(0xFFFFED00)
-#define INTC_IPR_REGISTERS_COUNT 12
-#define INTC_SYSTEM_REGISTERS_COUNT 2
-#define INTC_PRIORITY_MAX_VALUE 15
-#define INTC_SOURCE_MIN_VALUE 64
-#define INTC_SOURCE_MAX_VALUE 255
-#define INTC_IPR_HALF_BYTES_LENGTH (INTC_IPR_REGISTERS_COUNT * 4)
-#define INTC_INTERRUPT_POOL_SIZE 16
+#define SH2E_INTC_REGISTERS_START_ADDRESS UINT32_C(0xFFFFED00)
+#define SH2E_INTC_IPR_REGISTERS_COUNT 12
+#define SH2E_INTC_SYSTEM_REGISTERS_COUNT 2
+#define SH2E_INTC_PRIORITY_MAX_VALUE 15
+#define SH2E_INTC_SOURCE_MAX_VALUE 255
+#define SH2E_INTC_IPR_HALF_BYTES_LENGTH (SH2E_INTC_IPR_REGISTERS_COUNT * 4)
+#define SH2E_INTC_INTERRUPT_POOL_SIZE 16
 
-#define INTC_NMI_VECTOR_ADDRESS_OFFSET 11
-#define INTC_UBC_VECTOR_ADDRESS_OFFSET 12
-#define INTC_HUDI_VECTOR_ADDRESS_OFFSET 14
-#define INTC_IRQ_VECTOR_ADDRESS_OFFSET 64
-#define INTC_IRQ_NUMBER_OF_SOURCES 8
+#define SH2E_INTC_POWER_ON_RESET_EXTERNAL_OFFSET 0
+#define SH2E_INTC_POWER_ON_RESET_INTERNAL_OFFSET 1
+#define SH2E_INTC_MANUAL_RESET_OFFSET 2
+#define SH2E_INTC_NMI_VECTOR_ADDRESS_OFFSET 11
+#define SH2E_INTC_UBC_VECTOR_ADDRESS_OFFSET 12
+#define SH2E_INTC_HUDI_VECTOR_ADDRESS_OFFSET 14
+#define SH2E_INTC_IRQ_VECTOR_ADDRESS_OFFSET 64
+#define SH2E_INTC_IRQ_NUMBER_OF_SOURCES 8
 
+#define SH2E_INTC_VALID_RESET_ID(id) (id <= SH2E_INTC_MANUAL_RESET_OFFSET)
+#define SH2E_INTC_VALID_IRQ_SOURCE_ID(id) (id >= SH2E_INTC_IRQ_VECTOR_ADDRESS_OFFSET && id < (SH2E_INTC_IRQ_VECTOR_ADDRESS_OFFSET + SH2E_INTC_IRQ_NUMBER_OF_SOURCES))
+#define SH2E_INTC_VALID_OTHER_SOURCE_ID(id) (id > (SH2E_INTC_IRQ_VECTOR_ADDRESS_OFFSET + SH2E_INTC_IRQ_NUMBER_OF_SOURCES) && id <= SH2E_INTC_SOURCE_MAX_VALUE)
 
-#define INTC_VALID_SOURCE_ID(id) \
-    (id == INTC_HUDI_VECTOR_ADDRESS_OFFSET || id == INTC_UBC_VECTOR_ADDRESS_OFFSET || (id >= INTC_SOURCE_MIN_VALUE && id <= INTC_SOURCE_MAX_VALUE))
+#define SH2E_INTC_VALID_SOURCE_ID(id) \
+    (SH2E_INTC_VALID_RESET_ID(id) || (id == SH2E_INTC_HUDI_VECTOR_ADDRESS_OFFSET) || (id == SH2E_INTC_UBC_VECTOR_ADDRESS_OFFSET) || SH2E_INTC_VALID_IRQ_SOURCE_ID(id) || SH2E_INTC_VALID_OTHER_SOURCE_ID(id))
 
-#define INTC_VALID_IRQ_SOURCE_ID(id) (id >= INTC_IRQ_VECTOR_ADDRESS_OFFSET && id < (INTC_IRQ_VECTOR_ADDRESS_OFFSET + INTC_IRQ_NUMBER_OF_SOURCES))
-
-typedef struct sh2e_cpu sh2e_cpu_t;
 
 /** Struct for Interrupt Control Register (ICR) */
 typedef union sh2e_intc_icr {
@@ -106,10 +108,10 @@ typedef union sh2e_intc_isr {
 
 typedef struct sh2e_intc_regs {
 
-    uint16_t priority[INTC_IPR_REGISTERS_COUNT];
+    uint16_t priority[SH2E_INTC_IPR_REGISTERS_COUNT];
 
     union {
-        uint16_t system[INTC_SYSTEM_REGISTERS_COUNT];
+        uint16_t system[SH2E_INTC_SYSTEM_REGISTERS_COUNT];
 
         PACKED struct {
             /** Interrupt Control Register (ICR) */
@@ -123,7 +125,7 @@ typedef struct sh2e_intc_regs {
 
 } sh2e_intc_regs_t;
 
-_Static_assert(sizeof(sh2e_intc_regs_t) == sizeof(uint16_t) * (INTC_IPR_REGISTERS_COUNT + INTC_SYSTEM_REGISTERS_COUNT), "invalid sh2e_intc_regs_t size!");
+_Static_assert(sizeof(sh2e_intc_regs_t) == sizeof(uint16_t) * (SH2E_INTC_IPR_REGISTERS_COUNT + SH2E_INTC_SYSTEM_REGISTERS_COUNT), "invalid sh2e_intc_regs_t size!");
 
 typedef struct sh2e_intc_source {
     uint8_t priority_pool_index; /** All priority registers are divided into 4 half bytes, so there are 48 possible indices (0-47) */
@@ -139,13 +141,13 @@ typedef struct sh2e_intc {
 
     uint16_t nmi_prev_value; /** Previous value of NMI pin */
 
-    // NOTE: invalid values (INTC_VALID_SOURCE_ID) are not used
-    sh2e_intc_source_t sources[INTC_SOURCE_MAX_VALUE + 1]; /** Interrupt sources pool */
+    // NOTE: invalid values (SH2E_INTC_VALID_SOURCE_ID) are not used
+    sh2e_intc_source_t sources[SH2E_INTC_SOURCE_MAX_VALUE + 1]; /** Interrupt sources pool */
 
     /** Internal use */
     uint8_t interrupt_out; /** Interrupt number with the highest priority */
 
-    uint8_t priority_out; /** Priority of the interrupt source that could be accepted by the CPU */
+    uint32_t priority_out; /** Priority of the interrupt source that could be accepted by the CPU */
 
     unsigned int id; /** ID of the INTC */
 
@@ -160,9 +162,13 @@ extern void sh2e_intc_change_regs_address(sh2e_intc_t * intc, uint32_t regs_addr
 
 extern void sh2e_intc_done(sh2e_intc_t * intc);
 
-extern uint8_t sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask);
+extern bool sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask, uint8_t * interrupt_out);
 
-extern uint8_t sh2e_accept_interrupt(sh2e_intc_t * intc);
+extern bool sh2e_check_pending_resets(sh2e_intc_t * intc, uint8_t * reset_out);
+
+extern void sh2e_accept_interrupt(sh2e_intc_t * intc, uint32_t * new_mask_out);
+
+extern void sh2e_accept_reset(sh2e_intc_t * intc);
 
 extern void sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id, uint8_t priority_pool_index, uint8_t priority);
 

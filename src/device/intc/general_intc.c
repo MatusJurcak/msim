@@ -76,20 +76,36 @@ intc_interrupt_down(general_intc_t * intc, unsigned int no) {
     intc->type->interrupt_down(intc->data, no);
 }
 
-uint8_t
-intc_check_interrupts(general_intc_t * intc, uint8_t mask) {
+bool
+intc_check_interrupts(general_intc_t * intc, uint8_t mask, uint8_t * interrupt_out) {
     if (intc == NULL) {
         intc = get_fallback_intc();
     }
-    return intc->type->check_interrupts(intc->data, mask);
+    return intc->type->check_interrupts(intc->data, mask, interrupt_out);
 }
 
-uint8_t
-intc_accept_interrupt(general_intc_t * intc) {
+void
+intc_accept_interrupt(general_intc_t * intc, uint32_t * new_mask_out) {
     if (intc == NULL) {
         intc = get_fallback_intc();
     }
-    return intc->type->accept_interrupt(intc->data);
+    intc->type->accept_interrupt(intc->data, new_mask_out);
+}
+
+bool
+intc_check_resets(general_intc_t * intc, uint8_t * reset_out) {
+    if (intc == NULL) {
+        intc = get_fallback_intc();
+    }
+    return intc->type->check_resets(intc->data, reset_out);
+}
+
+void
+intc_accept_reset(general_intc_t * intc) {
+    if (intc == NULL) {
+        intc = get_fallback_intc();
+    }
+    intc->type->accept_reset(intc->data);
 }
 
 void

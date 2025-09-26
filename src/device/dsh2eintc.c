@@ -16,6 +16,9 @@ static intc_ops_t const sh2e_intc_ops = {
     .check_interrupts = (check_interrupts_func_t) sh2e_check_pending_interrupts,
     .accept_interrupt = (accept_interrupt_func_t) sh2e_accept_interrupt,
 
+    .check_resets = (check_resets_func_t) sh2e_check_pending_resets,
+    .accept_reset = (accept_reset_func_t) sh2e_accept_reset,
+
     .init = (init_intc_func_t) sh2e_intc_init_regs,
 };
 
@@ -84,7 +87,7 @@ dsh2eintc_cmd_add_interrupt_source(token_t *parm, device_t *const dev)
 
     uint16_t source_id = parm_uint_next(&parm);
     uint8_t priority_pool_index = parm_uint_next(&parm);
-    uint8_t priority = parm_uint_next(&parm);
+    uint32_t priority = parm_uint_next(&parm);
 
     sh2e_intc_add_interrupt_source(get_sh2e_intc(dev), source_id, priority_pool_index, priority);
 

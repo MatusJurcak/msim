@@ -36,10 +36,6 @@ static cpu_ops_t const sh2e_cpu_ops = {
     // Interrupts
     .interrupt_up = (interrupt_func_t) sh2e_cpu_assert_interrupt,
     .interrupt_down = (interrupt_func_t) sh2e_cpu_deassert_interrupt,
-
-    // Resets
-    .power_on_reset_req = (power_on_reset_req_func_t) sh2e_cpu_power_on_reset_req,
-    .manual_reset_req = (manual_reset_req_func_t) sh2e_cpu_manual_reset_req,
 };
 
 /** Processor initialization. */
@@ -189,6 +185,29 @@ static bool dsh2ecpu_cmd_assert_interrupt(token_t *parm, device_t *const dev)
     return true;
 }
 
+static bool dsh2ecpu_cmd_add_intc(token_t *parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    const char *intc_name = parm_str_next(&parm);
+    device_t *intc_dev = dev_by_name(intc_name);
+
+    if (intc_dev == NULL) {
+        error("Interrupt controller device '%s' not found", intc_name);
+        return false;
+    }
+
+    sh2e_cpu_t *cpu = device_get_sh2e_cpu(dev);
+
+    cpu->intc = get_generic_intc(intc_dev);
+    if (cpu->intc == NULL) {
+        error("Failed to get SH-2E interrupt controller from device '%s'", intc_name);
+        return false;
+    }
+
+    return true;
+}
+
 /** Execute one processor step. */
 static void
 dsh2ecpu_step(device_t *const dev)
@@ -271,6 +290,13 @@ static cmd_t const dsh2ecpu_cmds[] = {
             "Assert interrupt",
             "Assert interrupt <interrupt_source>",
             REQ INT "interrupt_source" END },
+    { "addintc",
+            (fcmd_t) dsh2ecpu_cmd_add_intc,
+            DEFAULT,
+            DEFAULT,
+            "Add interrupt controller",
+            "Add interrupt controller <intc_device_name>",
+            REQ STR "intc_device_name" END },
     LAST_CMD
 };
 
