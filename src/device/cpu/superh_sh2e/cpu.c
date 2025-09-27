@@ -286,6 +286,10 @@ sh2e_cpu_handle_exception(sh2e_cpu_t * const restrict cpu, sh2e_exception_t ex, 
     }
     }
 
+    if (machine_trace) {
+        sh2e_cpu_dump_exception_state_data(cpu, ex, vector_addr);
+    }
+
     uint32_t const stack_sr = cpu->cpu_regs.sr.value;
     uint32_t const stack_sr_addr = cpu->cpu_regs.sp - sizeof(uint32_t);
 
@@ -368,6 +372,10 @@ sh2e_cpu_handle_interrupt(sh2e_cpu_t * const restrict cpu) {
     uint32_t new_mask = 0;
 
     intc_accept_interrupt(cpu->intc, &new_mask);
+
+    if (machine_trace) {
+        sh2e_cpu_dump_interrupt_state_data(cpu, cpu->pending_interrupt, new_mask);
+    }
 
     cpu->cpu_regs.sr.im = new_mask;
 
@@ -482,6 +490,10 @@ sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
 
     bool interrupt_pending = intc_check_interrupts(cpu->intc, cpu->cpu_regs.sr.im, &interrupt_source);
 
+    if (machine_trace) {
+        sh2e_cpu_dump_power_down_state_data(cpu, interrupt_pending, interrupt_source);
+    }
+
     if (interrupt_pending) {
         cpu->pending_interrupt = interrupt_source;
         cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
@@ -499,6 +511,10 @@ sh2e_standby_state_step(sh2e_cpu_t * const restrict cpu) {
 static void
 sh2e_reset_state_step(sh2e_cpu_t * const restrict cpu) {
     ASSERT(cpu != NULL);
+
+    if (machine_trace) {
+        sh2e_cpu_dump_reset_state_data(cpu, cpu->reset_req);
+    }
 
     intc_accept_reset(cpu->intc);
 
@@ -586,7 +602,7 @@ sh2e_program_execution_state_step(sh2e_cpu_t * const restrict cpu) {
     }
 
     // Go to exception processing state if there is an exception or a pending interrupt.
-    if (cpu->insn_exception != SH2E_EXCEPTION_NONE || cpu->pending_interrupt) {
+    if (cpu->insn_exception != SH2E_EXCEPTION_NONE || cpu->pending_address_error || cpu->pending_interrupt) {
         cpu->pr_state = SH2E_PSTATE_EXCEPTION_PROCESSING;
     }
 
