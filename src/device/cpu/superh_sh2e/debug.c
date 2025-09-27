@@ -18,6 +18,7 @@
 #include "../../../env.h"
 #include "../../../main.h"
 #include "../../../utils.h"
+#include "../../intc/superh_sh2e/intc.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -270,4 +271,180 @@ void
 sh2e_dump_insn_phys(ptr36_t const addr) {
     sh2e_insn_t insn = { .word = sh2e_physmem_read16(-1, addr, false) };
     sh2e_cpu_dump_insn(NULL, addr, insn);
+}
+
+void
+sh2e_cpu_dump_exception_state_data(sh2e_cpu_t const * cpu, sh2e_exception_t const exception, uint32_t const pc_addr) {
+    ASSERT(cpu != NULL);
+
+    string_t s_cpu;
+    string_init(&s_cpu);
+
+    if (cpu != NULL) {
+        string_printf(&s_cpu, "cpu%u", cpu->id);
+    }
+
+    string_t s_state;
+    string_init(&s_state);
+
+    string_printf(&s_state, "EXCEPTION PROCESSING STATE");
+
+    string_t s_exception;
+    string_init(&s_exception);
+
+    string_printf(&s_exception, " Exception: ");
+
+    switch (exception) {
+    case SH2E_EXCEPTION_CPU_ADDRESS_ERROR:
+        string_printf(&s_exception, "CPU Address Error");
+        break;
+    case SH2E_EXCEPTION_ILLEGAL_INSTRUCTION:
+        string_printf(&s_exception, "Illegal Instruction");
+        break;
+    case SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION:
+        string_printf(&s_exception, "Illegal Slot Instruction");
+        break;
+    case SH2E_EXCEPTION_FPU_OPERATION:
+        string_printf(&s_exception, "FPU Operation");
+        break;
+    case SH2E_EXCEPTION_NONE:
+        string_printf(&s_exception, "None");
+        break;
+    default:
+        string_printf(&s_exception, "Unknown (%d)", exception);
+        break;
+    }
+
+    string_printf(&s_exception, ", PC addr from EPVA: %08" PRIX32 "\n", pc_addr);
+
+    // Print the output.
+
+    printf("%-7s", s_cpu.str);
+    printf("%-30s", s_state.str);
+    printf("%s", s_exception.str);
+
+    // Cleanup.
+
+    string_done(&s_cpu);
+    string_done(&s_state);
+    string_done(&s_exception);
+}
+
+void
+sh2e_cpu_dump_interrupt_state_data(sh2e_cpu_t const * cpu, uint8_t const interrupt_source, uint32_t const priority) {
+    ASSERT(cpu != NULL);
+
+    string_t s_cpu;
+    string_init(&s_cpu);
+
+    if (cpu != NULL) {
+        string_printf(&s_cpu, "cpu%u", cpu->id);
+    }
+
+    string_t s_state;
+    string_init(&s_state);
+
+    string_printf(&s_state, "EXCEPTION PROCESSING STATE");
+
+    string_t s_interrupt;
+    string_init(&s_interrupt);
+
+    string_printf(&s_interrupt, "accepting interrupt source: %u (priority: %u), vector table address offset: %08" PRIX32 "\n", interrupt_source, priority, interrupt_source * 4);
+
+    // Print the output.
+
+    printf("%-7s", s_cpu.str);
+    printf("%-30s", s_state.str);
+    printf("%s", s_interrupt.str);
+
+    // Cleanup.
+
+    string_done(&s_cpu);
+    string_done(&s_state);
+    string_done(&s_interrupt);
+}
+
+void
+sh2e_cpu_dump_reset_state_data(sh2e_cpu_t const * cpu, sh2e_reset_req_t const reset_req) {
+    ASSERT(cpu != NULL);
+
+    string_t s_cpu;
+    string_init(&s_cpu);
+
+    if (cpu != NULL) {
+        string_printf(&s_cpu, "cpu%u", cpu->id);
+    }
+
+    string_t s_state;
+    string_init(&s_state);
+
+    string_printf(&s_state, "RESET STATE");
+
+    string_t s_reset;
+    string_init(&s_reset);
+
+    switch (reset_req) {
+    case SH2E_POWER_ON_RESET_REQ_INTERNAL:
+    case SH2E_POWER_ON_RESET_REQ_EXTERNAL:
+        string_printf(&s_reset, "power-on reset (%s)", reset_req == SH2E_POWER_ON_RESET_REQ_INTERNAL ? "internal" : "external");
+        break;
+    case SH2E_MANUAL_RESET_REQ:
+        string_printf(&s_reset, "manual reset");
+        break;
+    case SH2E_POWER_ON_RESET_INITIAL:
+        string_printf(&s_reset, "initial power-on reset");
+        break;
+    default:
+        string_printf(&s_reset, "unknown reset request");
+        break;
+    }
+
+    // Print the output.
+
+    printf("%-7s", s_cpu.str);
+    printf("%-30s", s_state.str);
+    printf("%s\n", s_reset.str);
+
+    // Cleanup.
+
+    string_done(&s_cpu);
+    string_done(&s_state);
+    string_done(&s_reset);
+}
+
+void
+sh2e_cpu_dump_power_down_state_data(sh2e_cpu_t const * cpu, bool pending_interrupt, uint8_t const interrupt_source) {
+    ASSERT(cpu != NULL);
+
+    string_t s_cpu;
+    string_init(&s_cpu);
+
+    if (cpu != NULL) {
+        string_printf(&s_cpu, "cpu%u", cpu->id);
+    }
+
+    string_t s_state;
+    string_init(&s_state);
+
+    string_printf(&s_state, "POWER DOWN STATE");
+
+    string_t s_info;
+    string_init(&s_info);
+
+    if (pending_interrupt) {
+        string_printf(&s_info, "pending interrupt source: %u\n", interrupt_source);
+    } else {
+        string_printf(&s_info, "no pending interrupts\n");
+    }
+
+    // Print the output.
+    printf("%-7s", s_cpu.str);
+    printf("%-30s", s_state.str);
+    printf("%s", s_info.str);
+
+    // Cleanup.
+
+    string_done(&s_cpu);
+    string_done(&s_state);
+    string_done(&s_info);
 }

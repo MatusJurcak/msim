@@ -40,5 +40,9 @@ extern void sh2e_cpu_dump_data(sh2e_cpu_t const * cpu, uint32_t start_addr, unsi
 
 extern void sh2e_dump_insn_phys(ptr36_t addr);
 
+extern void sh2e_cpu_dump_exception_state_data(sh2e_cpu_t const * cpu, sh2e_exception_t const exception, uint32_t const pc_addr);
+extern void sh2e_cpu_dump_interrupt_state_data(sh2e_cpu_t const * cpu, uint8_t const interrupt_source, uint32_t const priority);
+extern void sh2e_cpu_dump_reset_state_data(sh2e_cpu_t const * cpu, sh2e_reset_req_t const reset_req);
+extern void sh2e_cpu_dump_power_down_state_data(sh2e_cpu_t const * cpu, bool pending_interrupt, uint8_t const interrupt_source);
 
 #endif // SUPERH_SH2E_DEBUG_H_
