@@ -81,7 +81,7 @@ OBJECTS := $(addsuffix .o,$(basename $(SOURCES)))
 export MSIM_OBJECTS = $(OBJECTS)
 export MSIM_LIBS = $(LIBS)
 
-.PHONY: all clean distclean rvtest
+.PHONY: all clean distclean rvtest shtest
 
 all: $(TARGET)
 	-[ -f $(DEPEND) ] && $(CP) -a $(DEPEND) $(DEPEND_PREV)
@@ -106,3 +106,6 @@ $(DEPEND):
 
 rvtest: all
 	$(MAKE) -C ../tests/rvtests/unit-tests test
+
+shtest: all
+	$(MAKE) -C ../tests/shtests/unit-tests test
