@@ -2227,13 +2227,18 @@ sh2e_insn_decode(sh2e_insn_t const insn) {
     // Decode using the top 4 bits.
     // See Table A.56: Operation Code Map.
     switch (insn.word >> 12) {
-    case 0b0000: // z_format, n_format, nm_format
+    case 0b0000: // z_format, n_format, m_format, nm_format
         desc = sh2e_insn_decode_z_format(insn.z_form);
         if (desc != NULL) {
             return desc;
         }
 
         desc = sh2e_insn_decode_n_format(insn.n_form);
+        if (desc != NULL) {
+            return desc;
+        }
+
+        desc = sh2e_insn_decode_m_format(insn.m_form);
         if (desc != NULL) {
             return desc;
         }

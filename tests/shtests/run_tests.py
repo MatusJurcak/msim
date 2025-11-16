@@ -6,28 +6,6 @@ import filecmp
 
 TESTS = [
     "simple",
-    "loads",
-    "stores",
-    "ops",
-    "op-imm",
-    "jumps",
-    "branches",
-    "m-extension",
-    "amo",
-    "lr-sc",
-    "scyclecmp",
-    "exceptions/simple",
-    "exceptions/delegated",
-    "exceptions/not_delegated",
-    "exceptions/delegated_from_m",
-    "exceptions/interrupt_simple",
-    "exceptions/interrupt_delegated",
-    "exceptions/interrupt_delegation_masks",
-    "virtual-addressing",
-    "external-SEIP",
-    "m-mode-STIP",
-    "mprv-fetch",
-    "tlb"
 ]
 
 MSIM_PATH = "../../msim"
