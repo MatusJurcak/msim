@@ -361,7 +361,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stc_gbr;
     }
 
-    case ic12(0b0000, 0b00110010): {
+    case ic12(0b0000, 0b00100010): {
         static sh2e_insn_desc_t const stc_vbr = {
             .assembly = "STC VBR, Rn",
             .exec = sh2e_insn_exec_stc_cpu,
@@ -1805,8 +1805,8 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
     // Table A.46: Indirect GBR addressing with Displacement
     case 0b11000000: {
         static sh2e_insn_desc_t const movblg = {
-            .assembly = "MOV.B R0, @(disp, GBR)",
-            .abstract = "R0{7:0} → [GBR + ZE(disp)]",
+            .assembly = "MOV.B @(disp, GBR), R0",
+            .abstract = "SE([GBR + ZE(disp)]) → R0",
             .exec = sh2e_insn_exec_movblg,
             .disasm = sh2e_insn_desc_dump_d_format_movbg,
             .cycles = 1,
@@ -1816,8 +1816,8 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
 
     case 0b11000001: {
         static sh2e_insn_desc_t const movwlg = {
-            .assembly = "MOV.W R0, @(disp, GBR)",
-            .abstract = "R0{15:0} → [GBR + ZE(disp) × 2]",
+            .assembly = "MOV.W @(disp, GBR), R0",
+            .abstract = "SE([GBR + ZE(disp) × 2]) → R0",
             .exec = sh2e_insn_exec_movwlg,
             .disasm = sh2e_insn_desc_dump_d_format_movwg,
             .cycles = 1,
@@ -1827,8 +1827,8 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
 
     case 0b11000010: {
         static sh2e_insn_desc_t const movllg = {
-            .assembly = "MOV.L R0, @(disp, GBR)",
-            .abstract = "R0 → [GBR + ZE(disp) × 4]",
+            .assembly = "MOV.L @(disp, GBR), R0",
+            .abstract = "[GBR + ZE(disp) × 4] → R0",
             .exec = sh2e_insn_exec_movllg,
             .disasm = sh2e_insn_desc_dump_d_format_movlg,
             .cycles = 1,
@@ -1838,8 +1838,8 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
 
     case 0b11000100: {
         static sh2e_insn_desc_t const movbsg = {
-            .assembly = "MOV.B @(disp, GBR), R0",
-            .abstract = "SE([GBR + ZE(disp)]) → R0",
+            .assembly = "MOV.B R0, @(disp, GBR)",
+            .abstract = "R0{7:0} → [GBR + ZE(disp)]",
             .exec = sh2e_insn_exec_movbsg,
             .disasm = sh2e_insn_desc_dump_d_format_movbg,
             .cycles = 1,
@@ -1849,8 +1849,8 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
 
     case 0b11000101: {
         static sh2e_insn_desc_t const movwsg = {
-            .assembly = "MOV.W @(disp, GBR), R0",
-            .abstract = "SE([GBR + ZE(disp) × 2]) → R0",
+            .assembly = "MOV.W R0, @(disp, GBR)",
+            .abstract = "R0{15:0} → [GBR + ZE(disp) × 2]",
             .exec = sh2e_insn_exec_movwsg,
             .disasm = sh2e_insn_desc_dump_d_format_movwg,
             .cycles = 1,
@@ -1860,8 +1860,8 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
 
     case 0b11000110: {
         static sh2e_insn_desc_t const movlsg = {
-            .assembly = "MOV.L @(disp, GBR), R0",
-            .abstract = "[GBR + ZE(disp) × 4] → R0",
+            .assembly = "MOV.L R0, @(disp, GBR)",
+            .abstract = "R0 → [GBR + ZE(disp) × 4]",
             .exec = sh2e_insn_exec_movlsg,
             .disasm = sh2e_insn_desc_dump_d_format_movlg,
             .cycles = 1,

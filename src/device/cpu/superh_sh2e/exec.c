@@ -1036,7 +1036,7 @@ sh2e_insn_exec_movbm(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn)
 
 sh2e_exception_t
 sh2e_insn_exec_movwm(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
-    return sh2e_insn_movm(cpu, insn, sizeof(uint16_t), sh2e_cpu_write_byte);
+    return sh2e_insn_movm(cpu, insn, sizeof(uint16_t), sh2e_cpu_write_word);
 }
 
 

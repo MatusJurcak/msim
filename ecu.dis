@@ -1,0 +1,81 @@
+
+ecu.elf:     file format elf32-sh
+
+
+Disassembly of section .vectors:
+
+00000000 <.vectors>:
+   0:	00 00       	.word 0x0000
+   2:	04 00       	.word 0x0400
+   4:	ff ff       	.word 0xffff
+   6:	80 00       	mov.b	r0,@(0,r0)
+	...
+ 2f0:	00 00       	.word 0x0000
+ 2f2:	74 20       	add	#32,r4
+	...
+ 300:	00 00       	.word 0x0000
+ 302:	f4 36       	.word 0xf436
+
+Disassembly of section .text:
+
+00000400 <_start>:
+ 400:	d0 04       	mov.l	414 <printer_address>,r0	! 90000000
+ 402:	e4 61       	mov	#97,r4
+ 404:	82 01       	.word 0x8201
+ 406:	64 02       	mov.l	@r0,r4
+ 408:	00 09       	nop	
+ 40a:	00 09       	nop	
+ 40c:	00 09       	nop	
+ 40e:	82 00       	.word 0x8200
+
+00000410 <sr_value_for_ldc_instruction>:
+ 410:	00 00       	.word 0x0000
+	...
+
+00000414 <printer_address>:
+ 414:	90 00       	mov.w	418 <intc_iprj_address>,r0	! ffff
+	...
+
+00000418 <intc_iprj_address>:
+ 418:	ff ff       	.word 0xffff
+ 41a:	ed 12       	mov	#18,r13
+
+0000041c <intc_iprj_new_address>:
+ 41c:	ff ff       	.word 0xffff
+ 41e:	e0 12       	mov	#18,r0
+
+Disassembly of section _cmt0:
+
+00000420 <_cmt0_start-0x7000>:
+	...
+
+00007420 <_cmt0_start>:
+    7420:	e0 63       	mov	#99,r0
+    7422:	21 02       	mov.l	r0,@r1
+    7424:	e0 6d       	mov	#109,r0
+    7426:	21 02       	mov.l	r0,@r1
+    7428:	e0 74       	mov	#116,r0
+    742a:	21 02       	mov.l	r0,@r1
+    742c:	e0 30       	mov	#48,r0
+    742e:	21 02       	mov.l	r0,@r1
+    7430:	e0 0a       	mov	#10,r0
+    7432:	21 02       	mov.l	r0,@r1
+    7434:	00 2b       	rte	
+
+Disassembly of section _cmt1:
+
+00007436 <_cmt1_start-0x8000>:
+	...
+
+0000f436 <_cmt1_start>:
+    f436:	e0 63       	mov	#99,r0
+    f438:	21 02       	mov.l	r0,@r1
+    f43a:	e0 6d       	mov	#109,r0
+    f43c:	21 02       	mov.l	r0,@r1
+    f43e:	e0 74       	mov	#116,r0
+    f440:	21 02       	mov.l	r0,@r1
+    f442:	e0 31       	mov	#49,r0
+    f444:	21 02       	mov.l	r0,@r1
+    f446:	e0 0a       	mov	#10,r0
+    f448:	21 02       	mov.l	r0,@r1
+    f44a:	00 2b       	rte	
