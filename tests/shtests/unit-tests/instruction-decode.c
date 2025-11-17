@@ -319,7 +319,7 @@ PCUT_TEST(stc_vbr_decode)
     sh2e_insn_n_t insn_stc_vbr = {
         .ic_h = 0b0000,
         .rn = R0_REG,
-        .ic_l = 0b00110010
+        .ic_l = 0b00100010
     };
 
     PCUT_ASSERT_EQUALS(sh2e_insn_exec_stc_cpu, sh2e_insn_decode((sh2e_insn_t) insn_stc_vbr)->exec);
@@ -492,15 +492,15 @@ PCUT_TEST(fsts_decode)
     PCUT_ASSERT_EQUALS(sh2e_insn_exec_fsts, sh2e_insn_decode((sh2e_insn_t) insn_fsts)->exec);
 }
 
-PCUT_TEST(ffloat_decode)
+PCUT_TEST(float_decode)
 {
-    sh2e_insn_n_t insn_ffloat = {
+    sh2e_insn_n_t insn_float = {
         .ic_h = 0b1111,
         .rn = FR0_REG,
         .ic_l = 0b00101101
     };
 
-    PCUT_ASSERT_EQUALS(sh2e_insn_exec_float, sh2e_insn_decode((sh2e_insn_t) insn_ffloat)->exec);
+    PCUT_ASSERT_EQUALS(sh2e_insn_exec_float, sh2e_insn_decode((sh2e_insn_t) insn_float)->exec);
 }
 
 PCUT_TEST(fneg_decode)
@@ -756,7 +756,6 @@ PCUT_TEST(braf_decode)
         .rm = R0_REG,
         .ic_l = 0b00100011
     };
-    sh2e_insn_exec_fn_t ret_value = sh2e_insn_decode((sh2e_insn_t) insn_braf);
 
     PCUT_ASSERT_EQUALS(sh2e_insn_exec_braf, sh2e_insn_decode((sh2e_insn_t) insn_braf)->exec);
 }
@@ -1988,4 +1987,44 @@ PCUT_TEST(movi_decode)
     PCUT_ASSERT_EQUALS(sh2e_insn_exec_movi, sh2e_insn_decode((sh2e_insn_t) insn_movi)->exec);
 }
 
+/*****************************************************************************
+ * Miscellaneous instructions
+ ****************************************************************************/
+
+PCUT_TEST(illegal_decode)
+{
+    sh2e_insn_z_t insn_illegal = {
+        .ic = 0xFFFF,
+    };
+
+    PCUT_ASSERT_EQUALS(sh2e_insn_exec_illegal, sh2e_insn_decode((sh2e_insn_t) insn_illegal)->exec);
+}
+
+PCUT_TEST(halt_decode)
+{
+    sh2e_insn_z_t insn_halt = {
+        .ic = 0b1000001000000000,
+    };
+
+    PCUT_ASSERT_EQUALS(sh2e_insn_exec_halt, sh2e_insn_decode((sh2e_insn_t) insn_halt)->exec);
+}
+
+PCUT_TEST(cpu_reg_dump_decode)
+{
+    sh2e_insn_z_t insn_cpu_reg_dump = {
+        .ic = 0b1000001000000001,
+    };
+
+    PCUT_ASSERT_EQUALS(sh2e_insn_exec_cpu_reg_dump, sh2e_insn_decode((sh2e_insn_t) insn_cpu_reg_dump)->exec);
+}
+
+PCUT_TEST(fpu_reg_dump_decode)
+{
+    sh2e_insn_z_t insn_fpu_reg_dump = {
+        .ic = 0b1000001000000010,
+    };
+
+    PCUT_ASSERT_EQUALS(sh2e_insn_exec_fpu_reg_dump, sh2e_insn_decode((sh2e_insn_t) insn_fpu_reg_dump)->exec);
+}
+ 
 PCUT_EXPORT(instruction_decoding);
