@@ -30,7 +30,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
     switch (insn.ic) {
     // Table A.25: 0 Format
     //   0b0000000000xxxxxx
-    case 0b0000000000001000: {
+    case sh2e_insn_z_ic_clrt: {
         static sh2e_insn_desc_t const clrt = {
             .assembly = "CLRT",
             .abstract = "0 → T",
@@ -41,7 +41,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &clrt;
     }
 
-    case 0b0000000000001001: {
+    case sh2e_insn_z_ic_nop: {
         static sh2e_insn_desc_t const nop = {
             .assembly = "NOP",
             .abstract = "(no operation)",
@@ -52,7 +52,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &nop;
     }
 
-    case 0b0000000000001011: {
+    case sh2e_insn_z_ic_rts: {
         static sh2e_insn_desc_t const rts = {
             .assembly = "RTS",
             .abstract = "PR → PC (delayed)",
@@ -65,7 +65,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &rts;
     }
 
-    case 0b0000000000011000: {
+    case sh2e_insn_z_ic_sett: {
         static sh2e_insn_desc_t const sett = {
             .assembly = "SETT",
             .abstract = "1 → T",
@@ -76,7 +76,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &sett;
     }
 
-    case 0b0000000000011001: {
+    case sh2e_insn_z_ic_div0u: {
         static sh2e_insn_desc_t const div0u = {
             .assembly = "DIV0U",
             .abstract = "0 → M/Q/T",
@@ -87,7 +87,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &div0u;
     }
 
-    case 0b0000000000011011: {
+    case sh2e_insn_z_ic_sleep: {
         static sh2e_insn_desc_t const sleep = {
             .assembly = "SLEEP",
             .abstract = "(sleep)",
@@ -98,7 +98,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &sleep;
     }
 
-    case 0b0000000000101000: {
+    case sh2e_insn_z_ic_clrmac: {
         static sh2e_insn_desc_t const clrmac = {
             .assembly = "CLRMAC",
             .abstract = "0 → MACH/MACL",
@@ -109,7 +109,7 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         return &clrmac;
     }
 
-    case 0b0000000000101011: {
+    case sh2e_insn_z_ic_rte: {
         static sh2e_insn_desc_t const rte = {
             .assembly = "RTE",
             .abstract = "stack area → PC/SR (delayed)",
@@ -121,8 +121,9 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
         };
         return &rte;
     }
+    default:
+        return NULL;
     }
-    return NULL;
 }
 
 
@@ -137,7 +138,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     uint16_t const ic = ic12(insn.ic_h, insn.ic_l);
     switch (ic) {
     // Table A.26: Direct Register
-    case ic12(0b0100, 0b00010101): {
+    case ic12(sh2e_insn_n_ic_h_cmppl, sh2e_insn_n_ic_l_cmppl): {
         static sh2e_insn_desc_t const cmppl = {
             .assembly = "CMP/PL Rn",
             .abstract = "Rn > 0 → T (signed)",
@@ -148,7 +149,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &cmppl;
     }
 
-    case ic12(0b0100, 0b00010001): {
+    case ic12(sh2e_insn_n_ic_h_cmppz, sh2e_insn_n_ic_l_cmppz): {
         static sh2e_insn_desc_t const cmppz = {
             .assembly = "CMP/PZ Rn",
             .abstract = "Rn >= 0 → T (signed)",
@@ -159,7 +160,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &cmppz;
     }
 
-    case ic12(0b0100, 0b00010000): {
+    case ic12(sh2e_insn_n_ic_h_dt, sh2e_insn_n_ic_l_dt): {
         static sh2e_insn_desc_t const dt = {
             .assembly = "DT Rn",
             .abstract = "(Rn – 1) → Rn, (Rn == 0) → T",
@@ -170,7 +171,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &dt;
     }
 
-    case ic12(0b0000, 0b00101001): {
+    case ic12(sh2e_insn_n_ic_h_movt, sh2e_insn_n_ic_l_movt): {
         static sh2e_insn_desc_t const movt = {
             .assembly = "MOVT Rn",
             .abstract = "T → Rn",
@@ -181,7 +182,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &movt;
     }
 
-    case ic12(0b0100, 0b00000100): {
+    case ic12(sh2e_insn_n_ic_h_rotl, sh2e_insn_n_ic_l_rotl): {
         static sh2e_insn_desc_t const rotl = {
             .assembly = "ROTL Rn",
             .abstract = "T ← Rn ← MSB",
@@ -192,7 +193,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &rotl;
     }
 
-    case ic12(0b0100, 0b00000101): {
+    case ic12(sh2e_insn_n_ic_h_rotr, sh2e_insn_n_ic_l_rotr): {
         static sh2e_insn_desc_t const rotr = {
             .assembly = "ROTR Rn",
             .abstract = "LSB → Rn → T",
@@ -203,7 +204,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &rotr;
     }
 
-    case ic12(0b0100, 0b00100100): {
+    case ic12(sh2e_insn_n_ic_h_rotcl, sh2e_insn_n_ic_l_rotcl): {
         static sh2e_insn_desc_t const rotcl = {
             .assembly = "ROTCL Rn",
             .abstract = "T ← Rn ← T",
@@ -214,7 +215,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &rotcl;
     }
 
-    case ic12(0b0100, 0b00100101): {
+    case ic12(sh2e_insn_n_ic_h_rotcr, sh2e_insn_n_ic_l_rotcr): {
         static sh2e_insn_desc_t const rotcr = {
             .assembly = "ROTCR Rn",
             .abstract = "T → Rn → T",
@@ -225,7 +226,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &rotcr;
     }
 
-    case ic12(0b0100, 0b00100000): {
+    case ic12(sh2e_insn_n_ic_h_shal, sh2e_insn_n_ic_l_shal): {
         static sh2e_insn_desc_t const shal = {
             .assembly = "SHAL Rn",
             .abstract = "T ← Rn ← 0",
@@ -236,7 +237,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shal;
     }
 
-    case ic12(0b0100, 0b00100001): {
+    case ic12(sh2e_insn_n_ic_h_shar, sh2e_insn_n_ic_l_shar): {
         static sh2e_insn_desc_t const shar = {
             .assembly = "SHAR Rn",
             .abstract = "MSB → Rn → T",
@@ -247,7 +248,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shar;
     }
 
-    case ic12(0b0100, 0b00000000): {
+    case ic12(sh2e_insn_n_ic_h_shll, sh2e_insn_n_ic_l_shll): {
         static sh2e_insn_desc_t const shll = {
             .assembly = "SHLL Rn",
             .abstract = "T ← Rn ← 0",
@@ -258,7 +259,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shll;
     }
 
-    case ic12(0b0100, 0b00000001): {
+    case ic12(sh2e_insn_n_ic_h_shlr, sh2e_insn_n_ic_l_shlr): {
         static sh2e_insn_desc_t const shlr = {
             .assembly = "SHLR Rn",
             .abstract = "0 → Rn → T",
@@ -270,7 +271,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // SHLL scale:    0b00xx1000
-    case ic12(0b0100, 0b00001000): {
+    case ic12(sh2e_insn_n_ic_h_shll2, sh2e_insn_n_ic_l_shll2): {
         static sh2e_insn_desc_t const shll2 = {
             .assembly = "SHLL2 Rn",
             .abstract = "(Rn << 2) → Rn",
@@ -281,7 +282,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shll2;
     }
 
-    case ic12(0b0100, 0b00011000): {
+    case ic12(sh2e_insn_n_ic_h_shll8, sh2e_insn_n_ic_l_shll8): {
         static sh2e_insn_desc_t const shll8 = {
             .assembly = "SHLL8 Rn",
             .abstract = "(Rn << 8) → Rn",
@@ -292,7 +293,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shll8;
     }
 
-    case ic12(0b0100, 0b00101000): {
+    case ic12(sh2e_insn_n_ic_h_shll16, sh2e_insn_n_ic_l_shll16): {
         static sh2e_insn_desc_t const shll16 = {
             .assembly = "SHLL16 Rn",
             .abstract = "(Rn << 16) → Rn",
@@ -304,7 +305,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // SHLR scale:    0b00xx1001
-    case ic12(0b0100, 0b00001001): {
+    case ic12(sh2e_insn_n_ic_h_shlr2, sh2e_insn_n_ic_l_shlr2): {
         static sh2e_insn_desc_t const shlr2 = {
             .assembly = "SHLR2 Rn",
             .abstract = "(Rn >> 2) → Rn",
@@ -315,7 +316,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shlr2;
     }
 
-    case ic12(0b0100, 0b00011001): {
+    case ic12(sh2e_insn_n_ic_h_shlr8, sh2e_insn_n_ic_l_shlr8): {
         static sh2e_insn_desc_t const shlr8 = {
             .assembly = "SHLR8 Rn",
             .abstract = "(Rn >> 8) → Rn",
@@ -326,7 +327,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &shlr8;
     }
 
-    case ic12(0b0100, 0b00101001): {
+    case ic12(sh2e_insn_n_ic_h_shlr16, sh2e_insn_n_ic_l_shlr16): {
         static sh2e_insn_desc_t const shlr16 = {
             .assembly = "SHLR16 Rn",
             .abstract = "(Rn >> 16) → Rn",
@@ -339,7 +340,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
 
     // Table A.27: Direct Register (Store with Control and System Registers)
     // CPU ctl reg#:  0b00xx0010
-    case ic12(0b0000, 0b00000010): {
+    case ic12(sh2e_insn_n_ic_h_stc_sr, sh2e_insn_n_ic_l_stc_sr): {
         static sh2e_insn_desc_t const stc_sr = {
             .assembly = "STC SR, Rn",
             .exec = sh2e_insn_exec_stc_cpu,
@@ -350,7 +351,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stc_sr;
     }
 
-    case ic12(0b0000, 0b00010010): {
+    case ic12(sh2e_insn_n_ic_h_stc_gbr, sh2e_insn_n_ic_l_stc_gbr): {
         static sh2e_insn_desc_t const stc_gbr = {
             .assembly = "STC GBR, Rn",
             .exec = sh2e_insn_exec_stc_cpu,
@@ -361,7 +362,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stc_gbr;
     }
 
-    case ic12(0b0000, 0b00100010): {
+    case ic12(sh2e_insn_n_ic_h_stc_vbr, sh2e_insn_n_ic_l_stc_vbr): {
         static sh2e_insn_desc_t const stc_vbr = {
             .assembly = "STC VBR, Rn",
             .exec = sh2e_insn_exec_stc_cpu,
@@ -373,7 +374,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // FPU sys reg#:  0b01xx1010
-    case ic12(0b0000, 0b01011010): {
+    case ic12(sh2e_insn_n_ic_h_sts_fpul, sh2e_insn_n_ic_l_sts_fpul): {
         static sh2e_insn_desc_t const sts_fpul = {
             .assembly = "STS FPUL, Rn",
             .exec = sh2e_insn_exec_sts_fpu,
@@ -383,7 +384,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &sts_fpul;
     }
 
-    case ic12(0b0000, 0b01101010): {
+    case ic12(sh2e_insn_n_ic_h_sts_fpscr, sh2e_insn_n_ic_l_sts_fpscr): {
         static sh2e_insn_desc_t const sts_fpscr = {
             .assembly = "STS FPSCR, Rn",
             .exec = sh2e_insn_exec_sts_fpu,
@@ -394,7 +395,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // CPU sys reg#:  0b00xx1010
-    case ic12(0b0000, 0b00001010): {
+    case ic12(sh2e_insn_n_ic_h_sts_mach, sh2e_insn_n_ic_l_sts_mach): {
         static sh2e_insn_desc_t const sts_mach = {
             .assembly = "STS MACH, Rn",
             .exec = sh2e_insn_exec_sts_cpu,
@@ -405,7 +406,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &sts_mach;
     }
 
-    case ic12(0b0000, 0b00011010): {
+    case ic12(sh2e_insn_n_ic_h_sts_macl, sh2e_insn_n_ic_l_sts_macl): {
         static sh2e_insn_desc_t const sts_macl = {
             .assembly = "STS MACL, Rn",
             .exec = sh2e_insn_exec_sts_cpu,
@@ -416,7 +417,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &sts_macl;
     }
 
-    case ic12(0b0000, 0b00101010): {
+    case ic12(sh2e_insn_n_ic_h_sts_pr, sh2e_insn_n_ic_l_sts_pr): {
         static sh2e_insn_desc_t const sts_pr = {
             .assembly = "STS PR, Rn",
             .exec = sh2e_insn_exec_sts_cpu,
@@ -428,7 +429,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // Table A.28: Indirect Register
-    case ic12(0b0100, 0b00011011): {
+    case ic12(sh2e_insn_n_ic_h_tas, sh2e_insn_n_ic_l_tas): {
         static sh2e_insn_desc_t const tas = {
             .assembly = "TAS.B @Rn",
             .exec = sh2e_insn_exec_tas,
@@ -441,7 +442,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
 
     // Table A.29: Indirect Pre-Decrement Register
     // CPU ctl reg#:  0b00xx0011
-    case ic12(0b0100, 0b00000011): {
+    case ic12(sh2e_insn_n_ic_h_stcm_sr, sh2e_insn_n_ic_l_stcm_sr): {
         static sh2e_insn_desc_t const stcm_sr = {
             .assembly = "STC.L SR, @-Rn",
             .exec = sh2e_insn_exec_stcm_cpu,
@@ -452,7 +453,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stcm_sr;
     }
 
-    case ic12(0b0100, 0b00010011): {
+    case ic12(sh2e_insn_n_ic_h_stcm_gbr, sh2e_insn_n_ic_l_stcm_gbr): {
         static sh2e_insn_desc_t const stcm_gbr = {
             .assembly = "STC.L GBR, @-Rn",
             .exec = sh2e_insn_exec_stcm_cpu,
@@ -463,7 +464,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stcm_gbr;
     }
 
-    case ic12(0b0100, 0b00100011): {
+    case ic12(sh2e_insn_n_ic_h_stcm_vbr, sh2e_insn_n_ic_l_stcm_vbr): {
         static sh2e_insn_desc_t const stcm_vbr = {
             .assembly = "STC.L VBR, @-Rn",
             .exec = sh2e_insn_exec_stcm_cpu,
@@ -475,7 +476,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // FPU sys reg#:  0b01xx0010
-    case ic12(0b0100, 0b01010010): {
+    case ic12(sh2e_insn_n_ic_h_stsm_fpul, sh2e_insn_n_ic_l_stsm_fpul): {
         static sh2e_insn_desc_t const stsm_fpul = {
             .assembly = "STS.L FPUL, @-Rn",
             .exec = sh2e_insn_exec_stsm_fpu,
@@ -485,7 +486,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stsm_fpul;
     }
 
-    case ic12(0b0100, 0b01100010): {
+    case ic12(sh2e_insn_n_ic_h_stsm_fpscr, sh2e_insn_n_ic_l_stsm_fpscr): {
         static sh2e_insn_desc_t const stsm_fpscr = {
             .assembly = "STS.L FPSCR, @-Rn",
             .exec = sh2e_insn_exec_stsm_fpu,
@@ -496,7 +497,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
     }
 
     // CPU sys reg#:  0b00xx0010
-    case ic12(0b0100, 0b00000010): {
+    case ic12(sh2e_insn_n_ic_h_stsm_mach, sh2e_insn_n_ic_l_stsm_mach): {
         static sh2e_insn_desc_t const stsm_mach = {
             .assembly = "STS.L MACH, @-Rn",
             .exec = sh2e_insn_exec_stsm_cpu,
@@ -507,7 +508,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stsm_mach;
     }
 
-    case ic12(0b0100, 0b00010010): {
+    case ic12(sh2e_insn_n_ic_h_stsm_macl, sh2e_insn_n_ic_l_stsm_macl): {
         static sh2e_insn_desc_t const stsm_macl = {
             .assembly = "STS.L MACL, @-Rn",
             .exec = sh2e_insn_exec_stsm_cpu,
@@ -518,7 +519,7 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
         return &stsm_macl;
     }
 
-    case ic12(0b0100, 0b00100010): { // STS.L PR, @-Rn
+    case ic12(sh2e_insn_n_ic_h_stsm_pr, sh2e_insn_n_ic_l_stsm_pr): { // STS.L PR, @-Rn
         static sh2e_insn_desc_t const stsm_pr = {
             .assembly = "STS.L PR, @-Rn",
             .exec = sh2e_insn_exec_stsm_cpu,
@@ -527,6 +528,10 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
             .disable_interrupts = true,
         };
         return &stsm_pr;
+    }
+
+    default: {
+        return NULL;
     }
     }
 
@@ -540,7 +545,7 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
     switch (insn.ic_l) {
     // Table A.30: Floating-Point Instruction
     //   0bxxxx1101
-    case 0b00001101: {
+    case sh2e_insn_n_ic_l_fsts: {
         static sh2e_insn_desc_t const fsts = {
             .assembly = "FSTS FPUL, FRn",
             .abstract = "FPUL → FRn",
@@ -551,7 +556,7 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
         return &fsts;
     }
 
-    case 0b00101101: {
+    case sh2e_insn_n_ic_l_float: {
         static sh2e_insn_desc_t const ffloat = {
             .assembly = "FLOAT FPUL, FRn",
             .abstract = "(float) FPUL → FRn",
@@ -562,7 +567,7 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
         return &ffloat;
     }
 
-    case 0b01001101: {
+    case sh2e_insn_n_ic_l_fneg: {
         static sh2e_insn_desc_t const fneg = {
             .assembly = "FNEG FRn",
             .abstract = "–FRn → FRn",
@@ -573,7 +578,7 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
         return &fneg;
     }
 
-    case 0b01011101: {
+    case sh2e_insn_n_ic_l_fabs: {
         static sh2e_insn_desc_t const fabs = {
             .assembly = "FABS FRn",
             .abstract = "|FRn| → FRn",
@@ -584,7 +589,7 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
         return &fabs;
     }
 
-    case 0b10001101: {
+    case sh2e_insn_n_ic_l_fldi0: {
         static sh2e_insn_desc_t const fldi0 = {
             .assembly = "FLDI0 FRn",
             .abstract = "0.0 → FRn",
@@ -595,7 +600,7 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
         return &fldi0;
     }
 
-    case 0b10011101: {
+    case sh2e_insn_n_ic_l_fldi1: {
         static sh2e_insn_desc_t const fldi1 = {
             .assembly = "FLDI1 FRn",
             .abstract = "1.0 → FRn",
@@ -604,6 +609,10 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
             .cycles = 1,
         };
         return &fldi1;
+    }
+
+    default: {
+        return NULL;
     }
     }
 
@@ -621,7 +630,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     switch (ic) {
     // Table A.31: Direct Register (Load from Control and System Registers)
     // CPU ctl reg#:  0b00xx1110
-    case ic12(0b0100, 0b00001110): {
+    case ic12(sh2e_insn_m_ic_h_ldc_sr, sh2e_insn_m_ic_l_ldc_sr): {
         static sh2e_insn_desc_t const ldc_sr = {
             .assembly = "LDC Rm, SR",
             .abstract = "Rm → SR",
@@ -633,7 +642,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldc_sr;
     }
 
-    case ic12(0b0100, 0b00011110): {
+    case ic12(sh2e_insn_m_ic_h_ldc_gbr, sh2e_insn_m_ic_l_ldc_gbr): {
         static sh2e_insn_desc_t const ldc_gbr = {
             .assembly = "LDC Rm, GBR",
             .abstract = "Rm → GBR",
@@ -645,7 +654,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldc_gbr;
     }
 
-    case ic12(0b0100, 0b00101110): { // LDC Rm, VBR
+    case ic12(sh2e_insn_m_ic_h_ldc_vbr, sh2e_insn_m_ic_l_ldc_vbr): { // LDC Rm, VBR
         static sh2e_insn_desc_t const ldc_vbr = {
             .assembly = "LDC Rm, VBR",
             .abstract = "Rm → VBR",
@@ -658,7 +667,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     }
 
     // FPU sys reg#:  0b01xx1010
-    case ic12(0b0100, 0b01011010): {
+    case ic12(sh2e_insn_m_ic_h_lds_fpul, sh2e_insn_m_ic_l_lds_fpul): {
         static sh2e_insn_desc_t const lds_fpul = {
             .assembly = "LDS Rm, FPUL",
             .abstract = "Rm → FPUL",
@@ -669,7 +678,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &lds_fpul;
     }
 
-    case ic12(0b0100, 0b01101010): {
+    case ic12(sh2e_insn_m_ic_h_lds_fpscr, sh2e_insn_m_ic_l_lds_fpscr): {
         static sh2e_insn_desc_t const lds_fpscr = {
             .assembly = "LDS Rm, FPSCR",
             .abstract = "Rm → FPSCR",
@@ -681,7 +690,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     }
 
     // CPU sys reg#:  0b00xx1010
-    case ic12(0b0100, 0b00001010): {
+    case ic12(sh2e_insn_m_ic_h_lds_mach, sh2e_insn_m_ic_l_lds_mach): {
         static sh2e_insn_desc_t const lds_mach = {
             .assembly = "LDS Rm, MACH",
             .abstract = "Rm → MACH",
@@ -693,7 +702,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &lds_mach;
     }
 
-    case ic12(0b0100, 0b00011010): {
+    case ic12(sh2e_insn_m_ic_h_lds_macl, sh2e_insn_m_ic_l_lds_macl): {
         static sh2e_insn_desc_t const lds_macl = {
             .assembly = "LDS Rm, MACL",
             .abstract = "Rm → MACL",
@@ -705,7 +714,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &lds_macl;
     }
 
-    case ic12(0b0100, 0b00101010): {
+    case ic12(sh2e_insn_m_ic_h_lds_pr, sh2e_insn_m_ic_l_lds_pr): {
         static sh2e_insn_desc_t const lds_pr = {
             .assembly = "LDS Rm, PR",
             .abstract = "Rm → PR",
@@ -718,7 +727,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     }
 
     // Table A.32: Indirect Register
-    case ic12(0b0100, 0b00101011): {
+    case ic12(sh2e_insn_m_ic_h_jmp, sh2e_insn_m_ic_l_jmp): {
         static sh2e_insn_desc_t const jmp = {
             .assembly = "JMP @Rm",
             .abstract = "Rm → PC (delayed)",
@@ -731,7 +740,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &jmp;
     }
 
-    case ic12(0b0100, 0b00001011): {
+    case ic12(sh2e_insn_m_ic_h_jsr, sh2e_insn_m_ic_l_jsr): {
         static sh2e_insn_desc_t const jsr = {
             .assembly = "JSR @Rm",
             .abstract = "PC + 4 → PR, Rm → PC (delayed)",
@@ -746,7 +755,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
 
     // Table A.33: Indirect Post-Increment Register
     // CPU ctl reg#:  0b00xx0111
-    case ic12(0b0100, 0b00000111): {
+    case ic12(sh2e_insn_m_ic_h_ldcl_sr, sh2e_insn_m_ic_l_ldcl_sr): {
         static sh2e_insn_desc_t const ldcl_sr = {
             .assembly = "LDC.L @Rm+, SR",
             .abstract = "[Rm] → SR, Rm + 4 → Rm",
@@ -758,7 +767,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldcl_sr;
     }
 
-    case ic12(0b0100, 0b00010111): {
+    case ic12(sh2e_insn_m_ic_h_ldcl_gbr, sh2e_insn_m_ic_l_ldcl_gbr): {
         static sh2e_insn_desc_t const ldcl_gbr = {
             .assembly = "LDC.L @Rm+, GBR",
             .abstract = "[Rm] → GBR, Rm + 4 → Rm",
@@ -770,7 +779,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldcl_gbr;
     }
 
-    case ic12(0b0100, 0b00100111): { // LDC.L @Rm+, VBR
+    case ic12(sh2e_insn_m_ic_h_ldcl_vbr, sh2e_insn_m_ic_l_ldcl_vbr): { // LDC.L @Rm+, VBR
         static sh2e_insn_desc_t const ldcl_vbr = {
             .assembly = "LDC.L @Rm+, VBR",
             .abstract = "[Rm] → GBR, Rm + 4 → Rm",
@@ -783,7 +792,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     }
 
     // FPU sys reg#:  0b01xx0110
-    case ic12(0b0100, 0b01010110): {
+    case ic12(sh2e_insn_m_ic_h_ldsl_fpul, sh2e_insn_m_ic_l_ldsl_fpul): {
         static sh2e_insn_desc_t const ldsl_fpul = {
             .assembly = "LDS.L @Rm+, FPUL",
             .abstract = "[Rm] → FPUL, Rm + 4 → Rm",
@@ -794,7 +803,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldsl_fpul;
     }
 
-    case ic12(0b0100, 0b01100110): {
+    case ic12(sh2e_insn_m_ic_h_ldsl_fpscr, sh2e_insn_m_ic_l_ldsl_fpscr): {
         static sh2e_insn_desc_t const ldsl_fpscr = {
             .assembly = "LDS.L @Rm+, FPSCR",
             .abstract = "[Rm] → FPSCR, Rm + 4 → Rm",
@@ -806,7 +815,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     }
 
     // CPU sys reg#:  0b00xx0110
-    case ic12(0b0100, 0b00000110): {
+    case ic12(sh2e_insn_m_ic_h_ldsl_mach, sh2e_insn_m_ic_l_ldsl_mach): {
         static sh2e_insn_desc_t const ldsl_mach = {
             .assembly = "LDS.L @Rm+, MACH",
             .abstract = "[Rm] → MACH, Rm + 4 → Rm",
@@ -818,7 +827,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldsl_mach;
     }
 
-    case ic12(0b0100, 0b00010110): {
+    case ic12(sh2e_insn_m_ic_h_ldsl_macl, sh2e_insn_m_ic_l_ldsl_macl): {
         static sh2e_insn_desc_t const ldsl_macl = {
             .assembly = "LDS.L @Rm+, MACL",
             .abstract = "[Rm] → MACL, Rm + 4 → Rm",
@@ -830,7 +839,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &ldsl_macl;
     }
 
-    case ic12(0b0100, 0b00100110): {
+    case ic12(sh2e_insn_m_ic_h_ldsl_pr, sh2e_insn_m_ic_l_ldsl_pr): {
         static sh2e_insn_desc_t const ldsl_pr = {
             .assembly = "LDS.L @Rm+, PR",
             .abstract = "[Rm] → PR, Rm + 4 → Rm",
@@ -843,7 +852,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
     }
 
     // Table A.34: PC Relative Addressing with Rn
-    case ic12(0b0000, 0b00100011): {
+    case ic12(sh2e_insn_m_ic_h_braf, sh2e_insn_m_ic_l_braf): {
         static sh2e_insn_desc_t const braf = {
             .assembly = "BRAF Rm",
             .abstract = "PC + 4 + Rm → PC (delayed)",
@@ -856,7 +865,7 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
         return &braf;
     }
 
-    case ic12(0b0000, 0b00000011): {
+    case ic12(sh2e_insn_m_ic_h_bsrf, sh2e_insn_m_ic_l_bsrf): {
         static sh2e_insn_desc_t const bsrf = {
             .assembly = "BSRF Rm",
             .abstract = "PC + 4 → PR, PC + 4 + Rm → PC (delayed)",
@@ -867,6 +876,10 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
             .cycles = 2,
         };
         return &bsrf;
+    }
+
+    default: {
+        return NULL;
     }
     }
 
@@ -879,7 +892,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn) {
     switch (insn.ic_l) {
     // Table A.35: Floating-Point Instructions
-    case 0b00011101: {
+    case sh2e_insn_m_ic_l_flds: {
         static sh2e_insn_desc_t const flds = {
             .assembly = "FLDS FRm, FPUL",
             .abstract = "FRm → FPUL",
@@ -890,7 +903,7 @@ sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn) {
         return &flds;
     }
 
-    case 0b00111101: {
+    case sh2e_insn_m_ic_l_ftrc: {
         static sh2e_insn_desc_t const ftrc = {
             .assembly = "FTRC FRm, FPUL",
             .abstract = "(long) FRm → FPUL",
@@ -899,6 +912,10 @@ sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn) {
             .cycles = 1,
         };
         return &ftrc;
+    }
+
+    default: {
+        return NULL;
     }
     }
 
@@ -917,7 +934,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     uint_fast8_t const ic = ic8(insn.ic_h, insn.ic_l);
     switch (ic) {
     // Table A.36: Direct Register
-    case ic8(0b0011, 0b1100): {
+    case ic8(sh2e_insn_nm_ic_h_add, sh2e_insn_nm_ic_l_add): {
         static sh2e_insn_desc_t const add = {
             .assembly = "ADD Rm, Rn",
             .abstract = "Rn + Rm → Rn",
@@ -928,7 +945,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &add;
     }
 
-    case ic8(0b0011, 0b1110): {
+    case ic8(sh2e_insn_nm_ic_h_add, sh2e_insn_nm_ic_l_addc): {
         static sh2e_insn_desc_t const addc = {
             .assembly = "ADDC Rm, Rn",
             .abstract = "Rn + Rm + T → Rn (unsigned), carry → T",
@@ -939,7 +956,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &addc;
     }
 
-    case ic8(0b0011, 0b1111): {
+    case ic8(sh2e_insn_nm_ic_h_add, sh2e_insn_nm_ic_l_addv): {
         static sh2e_insn_desc_t const addv = {
             .assembly = "ADDV Rm, Rn",
             .abstract = "Rn + Rm → Rn (signed), overflow → T",
@@ -950,7 +967,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &addv;
     }
 
-    case ic8(0b0010, 0b1001): {
+    case ic8(sh2e_insn_nm_ic_h_and, sh2e_insn_nm_ic_l_and): {
         static sh2e_insn_desc_t const and = {
             .assembly = "AND Rm, Rn",
             .abstract = "Rn & Rm → Rn",
@@ -961,7 +978,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &and;
     }
 
-    case ic8(0b0011, 0b0000): {
+    case ic8(sh2e_insn_nm_ic_h_cmpeq, sh2e_insn_nm_ic_l_cmpeq): {
         static sh2e_insn_desc_t const cmpeq = {
             .assembly = "CMP/EQ Rm, Rn",
             .abstract = "Rn == Rm → T",
@@ -972,7 +989,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &cmpeq;
     }
 
-    case ic8(0b0011, 0b0010): {
+    case ic8(sh2e_insn_nm_ic_h_cmphs, sh2e_insn_nm_ic_l_cmphs): {
         static sh2e_insn_desc_t const cmphs = {
             .assembly = "CMP/HS Rm, Rn",
             .abstract = "Rn >= Rm → T (unsigned)",
@@ -983,7 +1000,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &cmphs;
     }
 
-    case ic8(0b0011, 0b0011): {
+    case ic8(sh2e_insn_nm_ic_h_cmpge, sh2e_insn_nm_ic_l_cmpge): {
         static sh2e_insn_desc_t const cmpge = {
             .assembly = "CMP/GE Rm, Rn",
             .abstract = "Rn >= Rm → T (signed)",
@@ -994,7 +1011,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &cmpge;
     }
 
-    case ic8(0b0011, 0b0110): {
+    case ic8(sh2e_insn_nm_ic_h_cmphi, sh2e_insn_nm_ic_l_cmphi): {
         static sh2e_insn_desc_t const cmphi = {
             .assembly = "CMP/HI Rm, Rn",
             .abstract = "Rn > Rm → T (unsigned)",
@@ -1005,7 +1022,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &cmphi;
     }
 
-    case ic8(0b0011, 0b0111): {
+    case ic8(sh2e_insn_nm_ic_h_cmpgt, sh2e_insn_nm_ic_l_cmpgt): {
         static sh2e_insn_desc_t const cmpgt = {
             .assembly = "CMP/GT Rm, Rn",
             .abstract = "Rn > Rm → T (signed)",
@@ -1016,7 +1033,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &cmpgt;
     }
 
-    case ic8(0b0010, 0b1100): {
+    case ic8(sh2e_insn_nm_ic_h_cmpstr, sh2e_insn_nm_ic_l_cmpstr): {
         static sh2e_insn_desc_t const cmpstr = {
             .assembly = "CMP/STR Rm, Rn",
             .abstract = "any byte in Rn equals corresponding byte in Rm → T",
@@ -1027,7 +1044,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &cmpstr;
     }
 
-    case ic8(0b0011, 0b0100): {
+    case ic8(sh2e_insn_nm_ic_h_div1, sh2e_insn_nm_ic_l_div1): {
         static sh2e_insn_desc_t const div1 = {
             .assembly = "DIV1 Rm, Rn",
             .abstract = "Rn ÷ Rm → T (1 step)",
@@ -1038,7 +1055,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &div1;
     }
 
-    case ic8(0b0010, 0b0111): {
+    case ic8(sh2e_insn_nm_ic_h_div0s, sh2e_insn_nm_ic_l_div0s): {
         static sh2e_insn_desc_t const div0s = {
             .assembly = "DIV0S Rm, Rn",
             .abstract = "Rn{31} → Q, Rm{31} → M, Q ^ M → T",
@@ -1049,7 +1066,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &div0s;
     }
 
-    case ic8(0b0011, 0b1101): {
+    case ic8(sh2e_insn_nm_ic_h_dmulsl, sh2e_insn_nm_ic_l_dmulsl): {
         static sh2e_insn_desc_t const dmulsl = {
             .assembly = "DMULS.L Rm, Rn",
             .abstract = "Rn × Rm → MACH:MACL (signed)",
@@ -1060,7 +1077,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &dmulsl;
     }
 
-    case ic8(0b0011, 0b0101): {
+    case ic8(sh2e_insn_nm_ic_h_dmulul, sh2e_insn_nm_ic_l_dmulul): {
         static sh2e_insn_desc_t const dmulul = {
             .assembly = "DMULU.L Rm, Rn",
             .abstract = "Rn × Rm → MACH:MACL (unsigned)",
@@ -1071,7 +1088,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &dmulul;
     }
 
-    case ic8(0b0110, 0b1110): {
+    case ic8(sh2e_insn_nm_ic_h_extsb, sh2e_insn_nm_ic_l_extsb): {
         static sh2e_insn_desc_t const extsb = {
             .assembly = "EXTS.B Rm, Rn",
             .abstract = "SE(Rm{7:0}) → Rn",
@@ -1082,7 +1099,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &extsb;
     }
 
-    case ic8(0b0110, 0b1111): {
+    case ic8(sh2e_insn_nm_ic_h_extsw, sh2e_insn_nm_ic_l_extsw): {
         static sh2e_insn_desc_t const extsw = {
             .assembly = "EXTS.W Rm, Rn",
             .abstract = "SE(Rm{15:0}) → Rn",
@@ -1093,7 +1110,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &extsw;
     }
 
-    case ic8(0b0110, 0b1100): {
+    case ic8(sh2e_insn_nm_ic_h_extub, sh2e_insn_nm_ic_l_extub): {
         static sh2e_insn_desc_t const extub = {
             .assembly = "EXTU.B Rm, Rn",
             .abstract = "ZE(Rm{7:0}) → Rn",
@@ -1104,7 +1121,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &extub;
     }
 
-    case ic8(0b0110, 0b1101): {
+    case ic8(sh2e_insn_nm_ic_h_extuw, sh2e_insn_nm_ic_l_extuw): {
         static sh2e_insn_desc_t const extuw = {
             .assembly = "EXTU.W Rm, Rn",
             .abstract = "ZE(Rm{15:0}) → Rn",
@@ -1115,7 +1132,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &extuw;
     }
 
-    case ic8(0b0110, 0b0011): {
+    case ic8(sh2e_insn_nm_ic_h_mov, sh2e_insn_nm_ic_l_mov): {
         static sh2e_insn_desc_t const mov = {
             .assembly = "MOV Rm, Rn",
             .abstract = "Rm → Rn",
@@ -1126,7 +1143,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &mov;
     }
 
-    case ic8(0b0000, 0b0111): {
+    case ic8(sh2e_insn_nm_ic_h_mull, sh2e_insn_nm_ic_l_mull): {
         static sh2e_insn_desc_t const mull = {
             .assembly = "MUL.L Rm, Rn",
             .abstract = "Rn × Rm → MACL",
@@ -1137,7 +1154,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &mull;
     }
 
-    case ic8(0b0010, 0b1111): {
+    case ic8(sh2e_insn_nm_ic_h_mulsw, sh2e_insn_nm_ic_l_mulsw): {
         static sh2e_insn_desc_t const mulsw = {
             .assembly = "MULS.W Rm, Rn",
             .abstract = "Rn{15:0} × Rm{15:0} → MACL (signed)",
@@ -1148,7 +1165,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &mulsw;
     }
 
-    case ic8(0b0010, 0b1110): {
+    case ic8(sh2e_insn_nm_ic_h_muluw, sh2e_insn_nm_ic_l_muluw): {
         static sh2e_insn_desc_t const muluw = {
             .assembly = "MULU.W Rm, Rn",
             .abstract = "Rn{15:0} × Rm{15:0} → MACL (unsigned)",
@@ -1159,7 +1176,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &muluw;
     }
 
-    case ic8(0b0110, 0b1011): {
+    case ic8(sh2e_insn_nm_ic_h_neg, sh2e_insn_nm_ic_l_neg): {
         static sh2e_insn_desc_t const neg = {
             .assembly = "NEG Rm, Rn",
             .abstract = "0 – Rm → Rn",
@@ -1170,7 +1187,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &neg;
     }
 
-    case ic8(0b0110, 0b1010): {
+    case ic8(sh2e_insn_nm_ic_h_negc, sh2e_insn_nm_ic_l_negc): {
         static sh2e_insn_desc_t const negc = {
             .assembly = "NEGC Rm, Rn",
             .abstract = "0 – Rm – T → Rn, borrow → T",
@@ -1181,7 +1198,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &negc;
     }
 
-    case ic8(0b0110, 0b0111): {
+    case ic8(sh2e_insn_nm_ic_h_not, sh2e_insn_nm_ic_l_not): {
         static sh2e_insn_desc_t const not_insn = {
             .assembly = "NOT Rm, Rn",
             .abstract = "~Rm → Rn",
@@ -1192,7 +1209,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &not_insn;
     }
 
-    case ic8(0b0010, 0b1011): {
+    case ic8(sh2e_insn_nm_ic_h_or, sh2e_insn_nm_ic_l_or): {
         static sh2e_insn_desc_t const or = {
             .assembly = "OR Rm, Rn",
             .abstract = "Rn | Rm → Rn",
@@ -1203,7 +1220,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &or ;
     }
 
-    case ic8(0b0011, 0b1000): {
+    case ic8(sh2e_insn_nm_ic_h_sub, sh2e_insn_nm_ic_l_sub): {
         static sh2e_insn_desc_t const sub = {
             .assembly = "SUB Rm, Rn",
             .abstract = "Rn – Rm → Rn",
@@ -1214,7 +1231,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &sub;
     }
 
-    case ic8(0b0011, 0b1010): {
+    case ic8(sh2e_insn_nm_ic_h_subc, sh2e_insn_nm_ic_l_subc): {
         static sh2e_insn_desc_t const subc = {
             .assembly = "SUBC Rm, Rn",
             .abstract = "Rn - Rm - T → Rn (unsigned), borrow → T",
@@ -1225,7 +1242,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &subc;
     }
 
-    case ic8(0b0011, 0b1011): {
+    case ic8(sh2e_insn_nm_ic_h_subv, sh2e_insn_nm_ic_l_subv): {
         static sh2e_insn_desc_t const subv = {
             .assembly = "SUBV Rm, Rn",
             .abstract = "Rn - Rm → Rn (signed), underflow → T",
@@ -1236,7 +1253,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &subv;
     }
 
-    case ic8(0b0110, 0b1000): {
+    case ic8(sh2e_insn_nm_ic_h_swapb, sh2e_insn_nm_ic_l_swapb): {
         static sh2e_insn_desc_t const swapb = {
             .assembly = "SWAP.B Rm, Rn",
             .abstract = "Rm{31:16}:Rm{7:0}:Rm{15:8} → Rn",
@@ -1247,7 +1264,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &swapb;
     }
 
-    case ic8(0b0110, 0b1001): {
+    case ic8(sh2e_insn_nm_ic_h_swapw, sh2e_insn_nm_ic_l_swapw): {
         static sh2e_insn_desc_t const swapw = {
             .assembly = "SWAP.W Rm, Rn",
             .abstract = "Rm{15:0}:Rm{31:16} → Rn",
@@ -1258,7 +1275,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &swapw;
     }
 
-    case ic8(0b0010, 0b1000): {
+    case ic8(sh2e_insn_nm_ic_h_tst, sh2e_insn_nm_ic_l_tst): {
         static sh2e_insn_desc_t const tst = {
             .assembly = "TST Rm, Rn",
             .abstract = "(Rn & Rm) == 0 → T",
@@ -1269,7 +1286,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &tst;
     }
 
-    case ic8(0b0010, 0b1010): {
+    case ic8(sh2e_insn_nm_ic_h_xor, sh2e_insn_nm_ic_l_xor): {
         static sh2e_insn_desc_t const xor = {
             .assembly = "XOR Rm, Rn",
             .abstract = "Rn ^ Rm → Rn",
@@ -1280,7 +1297,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &xor;
     }
 
-    case ic8(0b0010, 0b1101): {
+    case ic8(sh2e_insn_nm_ic_h_xtrct, sh2e_insn_nm_ic_l_xtrct): {
         static sh2e_insn_desc_t const xtrct = {
             .assembly = "XTRCT Rm, Rn",
             .abstract = "Rm{15:0}:Rn{31:16} → Rn",
@@ -1292,7 +1309,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     // Table A.37: Indirect Register
-    case ic8(0b0010, 0b0000): {
+    case ic8(sh2e_insn_nm_ic_h_movbs, sh2e_insn_nm_ic_l_movbs): {
         static sh2e_insn_desc_t const movbs = {
             .assembly = "MOV.B Rm, @Rn",
             .abstract = "Rm{7:0} → [Rn]",
@@ -1303,7 +1320,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movbs;
     }
 
-    case ic8(0b0010, 0b0001): {
+    case ic8(sh2e_insn_nm_ic_h_movws, sh2e_insn_nm_ic_l_movws): {
         static sh2e_insn_desc_t const movws = {
             .assembly = "MOV.W Rm, @Rn",
             .abstract = "Rm{15:0} → [Rn]",
@@ -1314,7 +1331,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movws;
     }
 
-    case ic8(0b0010, 0b0010): {
+    case ic8(sh2e_insn_nm_ic_h_movls, sh2e_insn_nm_ic_l_movls): {
         static sh2e_insn_desc_t const movls = {
             .assembly = "MOV.L Rm, @Rn",
             .abstract = "Rm → [Rn]",
@@ -1325,7 +1342,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movls;
     }
 
-    case ic8(0b0110, 0b0000): {
+    case ic8(sh2e_insn_nm_ic_h_movbl, sh2e_insn_nm_ic_l_movbl): {
         static sh2e_insn_desc_t const movbl = {
             .assembly = "MOV.B @Rm, Rn",
             .abstract = "SE([Rm]{7:0}) → Rn",
@@ -1336,7 +1353,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movbl;
     }
 
-    case ic8(0b0110, 0b0001): {
+    case ic8(sh2e_insn_nm_ic_h_movwl, sh2e_insn_nm_ic_l_movwl): {
         static sh2e_insn_desc_t const movwl = {
             .assembly = "MOV.W @Rm, Rn",
             .abstract = "SE([Rm]{15:0}) → Rn",
@@ -1347,7 +1364,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movwl;
     }
 
-    case ic8(0b0110, 0b0010): {
+    case ic8(sh2e_insn_nm_ic_h_movll, sh2e_insn_nm_ic_l_movll): {
         static sh2e_insn_desc_t const movll = {
             .assembly = "MOV.L @Rm, Rn",
             .abstract = "[Rm] → Rn",
@@ -1359,7 +1376,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     // Table A.38: Indirect Post-Increment Register (Multiply/Accumulate Operation)
-    case ic8(0b0000, 0b1111): {
+    case ic8(sh2e_insn_nm_ic_h_macl, sh2e_insn_nm_ic_l_macl): {
         static sh2e_insn_desc_t const macl = {
             .assembly = "MAC.L @Rm+, @Rn+",
             .abstract = "[Rn] × [Rm] + MAC → MAC (signed), Rn + 4 → Rn, Rm + 4 → Rm",
@@ -1370,7 +1387,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &macl;
     }
 
-    case ic8(0b0100, 0b1111): {
+    case ic8(sh2e_insn_nm_ic_h_macw, sh2e_insn_nm_ic_l_macw): {
         static sh2e_insn_desc_t const macw = {
             .assembly = "MAC.W @Rm+, @Rn+",
             .abstract = "[Rn]{15:0} × [Rm]{15:0} + MAC → MAC (signed), Rn + 2 → Rn, Rm + 2 → Rm",
@@ -1382,7 +1399,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     // Table A.39: Indirect Post-Increment Register
-    case ic8(0b0110, 0b0100): {
+    case ic8(sh2e_insn_nm_ic_h_movbp, sh2e_insn_nm_ic_l_movbp): {
         static sh2e_insn_desc_t const movbp = {
             .assembly = "MOV.B @Rm+, Rn",
             .abstract = "SE([Rm]{7:0}) → Rn, Rm + 1 → Rm",
@@ -1393,7 +1410,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movbp;
     }
 
-    case ic8(0b0110, 0b0101): {
+    case ic8(sh2e_insn_nm_ic_h_movwp, sh2e_insn_nm_ic_l_movwp): {
         static sh2e_insn_desc_t const movwp = {
             .assembly = "MOV.W @Rm+, Rn",
             .abstract = "SE([Rm]{15:0}) → Rn, Rm + 2 → Rm",
@@ -1404,7 +1421,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movwp;
     }
 
-    case ic8(0b0110, 0b0110): {
+    case ic8(sh2e_insn_nm_ic_h_movlp, sh2e_insn_nm_ic_l_movlp): {
         static sh2e_insn_desc_t const movlp = {
             .assembly = "MOV.L @Rm+, Rn",
             .abstract = "[Rm] → Rn, Rm + 4 → Rm",
@@ -1416,7 +1433,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     // Table A.40: Indirect Pre-Decrement Register
-    case ic8(0b0010, 0b0100): {
+    case ic8(sh2e_insn_nm_ic_h_movbm, sh2e_insn_nm_ic_l_movbm): {
         static sh2e_insn_desc_t const movbm = {
             .assembly = "MOV.B Rm, @–Rn",
             .abstract = "Rn - 1 → Rn, Rm{7:0} → [Rn]",
@@ -1427,7 +1444,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movbm;
     }
 
-    case ic8(0b0010, 0b0101): {
+    case ic8(sh2e_insn_nm_ic_h_movwm, sh2e_insn_nm_ic_l_movwm): {
         static sh2e_insn_desc_t const movwm = {
             .assembly = "MOV.W Rm, @–Rn",
             .abstract = "Rn - 2 → Rn, Rm{15:0} → [Rn]",
@@ -1438,7 +1455,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movwm;
     }
 
-    case ic8(0b0010, 0b0110): {
+    case ic8(sh2e_insn_nm_ic_h_movlm, sh2e_insn_nm_ic_l_movlm): {
         static sh2e_insn_desc_t const movlm = {
             .assembly = "MOV.L Rm, @–Rn",
             .abstract = "Rn - 4 → Rn, Rm → [Rn]",
@@ -1450,7 +1467,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
     }
 
     // Table A.41: Indirect Indexed Register
-    case ic8(0b0000, 0b0100): {
+    case ic8(sh2e_insn_nm_ic_h_movbs0, sh2e_insn_nm_ic_l_movbs0): {
         static sh2e_insn_desc_t const movbs0 = {
             .assembly = "MOV.B Rm, @(R0, Rn)",
             .abstract = "Rm{7:0} → [R0 + Rn]",
@@ -1461,7 +1478,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movbs0;
     }
 
-    case ic8(0b0000, 0b0101): {
+    case ic8(sh2e_insn_nm_ic_h_movws0, sh2e_insn_nm_ic_l_movws0): {
         static sh2e_insn_desc_t const movws0 = {
             .assembly = "MOV.W Rm, @(R0, Rn)",
             .abstract = "Rm{15:0} → [R0 + Rn]",
@@ -1472,7 +1489,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movws0;
     }
 
-    case ic8(0b0000, 0b0110): {
+    case ic8(sh2e_insn_nm_ic_h_movls0, sh2e_insn_nm_ic_l_movls0): {
         static sh2e_insn_desc_t const movls0 = {
             .assembly = "MOV.L Rm, @(R0, Rn)",
             .abstract = "Rm → [R0 + Rn]",
@@ -1483,7 +1500,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movls0;
     }
 
-    case ic8(0b0000, 0b1100): {
+    case ic8(sh2e_insn_nm_ic_h_movbl0, sh2e_insn_nm_ic_l_movbl0): {
         static sh2e_insn_desc_t const movbl0 = {
             .assembly = "MOV.B @(R0, Rm), Rn",
             .abstract = "SE([R0 + Rm]{7:0}) → Rn",
@@ -1494,7 +1511,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movbl0;
     }
 
-    case ic8(0b0000, 0b1101): {
+    case ic8(sh2e_insn_nm_ic_h_movwl0, sh2e_insn_nm_ic_l_movwl0): {
         static sh2e_insn_desc_t const movwl0 = {
             .assembly = "MOV.W @(R0, Rm), Rn",
             .abstract = "SE([R0 + Rm]{15:0}) → Rn",
@@ -1505,7 +1522,7 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
         return &movwl0;
     }
 
-    case ic8(0b0000, 0b1110): {
+    case ic8(sh2e_insn_nm_ic_h_movll0, sh2e_insn_nm_ic_l_movll0): {
         static sh2e_insn_desc_t const movll0 = {
             .assembly = "MOV.L @(R0, Rm), Rn",
             .abstract = "[R0 + Rm] → Rn",
@@ -1514,6 +1531,10 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
             .cycles = 1,
         };
         return &movll0;
+    }
+
+    default: {
+        break;
     }
     }
 
@@ -1526,7 +1547,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
     switch (insn.ic_l) {
     // Table A.42: Floating Point Instructions
-    case 0b0000: {
+    case sh2e_insn_nm_ic_l_fadd: {
         static sh2e_insn_desc_t const fadd = {
             .assembly = "FADD FRm, FRn",
             .abstract = "FRn + FRm → FRn",
@@ -1537,7 +1558,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fadd;
     }
 
-    case 0b0100: {
+    case sh2e_insn_nm_ic_l_fcmpeq: {
         static sh2e_insn_desc_t const fcmpeq = {
             .assembly = "FCMP/EQ FRm, FRn",
             .abstract = "FRn == FRm → T",
@@ -1548,7 +1569,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fcmpeq;
     }
 
-    case 0b0101: {
+    case sh2e_insn_nm_ic_l_fcmpgt: {
         static sh2e_insn_desc_t const fcmpgt = {
             .assembly = "FCMP/GT FRm, FRn",
             .abstract = "FRn > FRm → T",
@@ -1559,7 +1580,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fcmpgt;
     }
 
-    case 0b0011: {
+    case sh2e_insn_nm_ic_l_fdiv: {
         static sh2e_insn_desc_t const fdiv = {
             .assembly = "FDIV FRm, FRn",
             .abstract = "FRn ÷ FRm → FRn",
@@ -1570,7 +1591,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fdiv;
     }
 
-    case 0b1110: {
+    case sh2e_insn_nm_ic_l_fmac: {
         static sh2e_insn_desc_t const fmac = {
             .assembly = "FMAC FR0, FRm, FRn",
             .abstract = "FR0 × FRm + FRn → FRn",
@@ -1581,7 +1602,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmac;
     }
 
-    case 0b1100: {
+    case sh2e_insn_nm_ic_l_fmov: {
         static sh2e_insn_desc_t const fmov = {
             .assembly = "FMOV FRm, FRn",
             .abstract = "FRm → FRn",
@@ -1592,7 +1613,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmov;
     }
 
-    case 0b0110: {
+    case sh2e_insn_nm_ic_l_fmovli: {
         static sh2e_insn_desc_t const fmovli = {
             .assembly = "FMOV.S @(R0, Rm), FRn",
             .abstract = "[R0 + Rm] → FRn",
@@ -1603,7 +1624,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmovli;
     }
 
-    case 0b1001: {
+    case sh2e_insn_nm_ic_l_fmovlr: {
         static sh2e_insn_desc_t const fmovlr = {
             .assembly = "FMOV.S @Rm+, FRn",
             .abstract = "[Rm] → FRn, Rm + 4 → Rm",
@@ -1614,7 +1635,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmovlr;
     }
 
-    case 0b1000: {
+    case sh2e_insn_nm_ic_l_fmovl: {
         static sh2e_insn_desc_t const fmovl = {
             .assembly = "FMOV.S @Rm, FRn",
             .abstract = "[Rm] → FRn",
@@ -1625,7 +1646,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmovl;
     }
 
-    case 0b0111: {
+    case sh2e_insn_nm_ic_l_fmovsi: {
         static sh2e_insn_desc_t const fmovsi = {
             .assembly = "FMOV.S FRm, @(R0, Rn)",
             .abstract = "FRm → [R0 + Rn]",
@@ -1636,7 +1657,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmovsi;
     }
 
-    case 0b1011: {
+    case sh2e_insn_nm_ic_l_fmovss: {
         static sh2e_insn_desc_t const fmovss = {
             .assembly = "FMOV.S FRm, @-Rn",
             .abstract = "Rn - 4 → Rn, FRm → [Rn]",
@@ -1647,7 +1668,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmovss;
     }
 
-    case 0b1010: {
+    case sh2e_insn_nm_ic_l_fmovs: {
         static sh2e_insn_desc_t const fmovs = {
             .assembly = "FMOV.S FRm, @Rn",
             .abstract = "FRm → [Rn]",
@@ -1658,7 +1679,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmovs;
     }
 
-    case 0b0010: {
+    case sh2e_insn_nm_ic_l_fmul: {
         static sh2e_insn_desc_t const fmul = {
             .assembly = "FMUL FRm, FRn",
             .abstract = "FRn × FRm → FRn",
@@ -1669,7 +1690,7 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
         return &fmul;
     }
 
-    case 0b0001: {
+    case sh2e_insn_nm_ic_l_fsub: {
         static sh2e_insn_desc_t const fsub = {
             .assembly = "FSUB FRm, FRn",
             .abstract = "FRn – FRm → FRn",
@@ -1678,6 +1699,10 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
             .cycles = 1,
         };
         return &fsub;
+    }
+
+    default: {
+        return NULL;
     }
     }
 
@@ -1693,7 +1718,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_md_format(sh2e_insn_md_t const insn) {
     switch (insn.ic) {
     // Table A.43: Indirect register addressing with displacement
-    case 0b10000100: {
+    case sh2e_insn_md_ic_movbl4: {
         static sh2e_insn_desc_t const movbl4 = {
             .assembly = "MOV.B @(disp, Rm), R0",
             .abstract = "SE([Rm + ZE(disp)]) → R0",
@@ -1705,7 +1730,7 @@ sh2e_insn_decode_md_format(sh2e_insn_md_t const insn) {
         return &movbl4;
     }
 
-    case 0b10000101: {
+    case sh2e_insn_md_ic_movwl4: {
         static sh2e_insn_desc_t const movwl4 = {
             .assembly = "MOV.W @(disp, Rm), R0",
             .abstract = "SE([Rm + ZE(disp) × 2]) → R0",
@@ -1730,7 +1755,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn) {
     switch (insn.ic) {
     // Table A.44: Indirect register addressing with displacement
-    case 0b10000000: {
+    case sh2e_insn_nd4_ic_movbs4: {
         static sh2e_insn_desc_t const movbs4 = {
             .assembly = "MOV.B R0, @(disp, Rn)",
             .abstract = "R0{7:0} → [Rn + ZE(disp)]",
@@ -1742,7 +1767,7 @@ sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn) {
         return &movbs4;
     }
 
-    case 0b10000001: {
+    case sh2e_insn_nd4_ic_movws4: {
         static sh2e_insn_desc_t const movws4 = {
             .assembly = "MOV.W R0, @(disp, Rn)",
             .abstract = "R0{15:0} → [Rn + ZE(disp) × 2]",
@@ -1767,7 +1792,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_nmd_format(sh2e_insn_nmd_t const insn) {
     switch (insn.ic) {
     // Table A.45: Indirect register addressing with displacement
-    case 0b0001: {
+    case sh2e_insn_nmd_ic_movls4: {
         static sh2e_insn_desc_t const movls4 = {
             .assembly = "MOV.L Rm, @(disp, Rn)",
             .abstract = "Rm → [Rn + ZE(disp) × 4]",
@@ -1779,7 +1804,7 @@ sh2e_insn_decode_nmd_format(sh2e_insn_nmd_t const insn) {
         return &movls4;
     }
 
-    case 0b0101: {
+    case sh2e_insn_nmd_ic_movll4: {
         static sh2e_insn_desc_t const movll4 = {
             .assembly = "MOV.L @(disp, Rm), Rn",
             .abstract = "[Rm + ZE(disp) × 4] → Rn",
@@ -1803,7 +1828,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
     switch (insn.ic) {
     // Table A.46: Indirect GBR addressing with Displacement
-    case 0b11000000: {
+    case sh2e_insn_d_ic_movblg: {
         static sh2e_insn_desc_t const movblg = {
             .assembly = "MOV.B @(disp, GBR), R0",
             .abstract = "SE([GBR + ZE(disp)]) → R0",
@@ -1814,7 +1839,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &movblg;
     }
 
-    case 0b11000001: {
+    case sh2e_insn_d_ic_movwlg: {
         static sh2e_insn_desc_t const movwlg = {
             .assembly = "MOV.W @(disp, GBR), R0",
             .abstract = "SE([GBR + ZE(disp) × 2]) → R0",
@@ -1825,7 +1850,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &movwlg;
     }
 
-    case 0b11000010: {
+    case sh2e_insn_d_ic_movllg: {
         static sh2e_insn_desc_t const movllg = {
             .assembly = "MOV.L @(disp, GBR), R0",
             .abstract = "[GBR + ZE(disp) × 4] → R0",
@@ -1836,7 +1861,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &movllg;
     }
 
-    case 0b11000100: {
+    case sh2e_insn_d_ic_movbsg: {
         static sh2e_insn_desc_t const movbsg = {
             .assembly = "MOV.B R0, @(disp, GBR)",
             .abstract = "R0{7:0} → [GBR + ZE(disp)]",
@@ -1847,7 +1872,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &movbsg;
     }
 
-    case 0b11000101: {
+    case sh2e_insn_d_ic_movwsg: {
         static sh2e_insn_desc_t const movwsg = {
             .assembly = "MOV.W R0, @(disp, GBR)",
             .abstract = "R0{15:0} → [GBR + ZE(disp) × 2]",
@@ -1858,7 +1883,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &movwsg;
     }
 
-    case 0b11000110: {
+    case sh2e_insn_d_ic_movlsg: {
         static sh2e_insn_desc_t const movlsg = {
             .assembly = "MOV.L R0, @(disp, GBR)",
             .abstract = "R0 → [GBR + ZE(disp) × 4]",
@@ -1870,7 +1895,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
     }
 
     // Table A.47: PC Relative with Displacement
-    case 0b11000111: { //
+    case sh2e_insn_d_ic_mova: { //
         static sh2e_insn_desc_t const mova = {
             .assembly = "MOVA @(disp, PC), R0",
             .abstract = "[PC + ZE(disp) × 4] → R0",
@@ -1882,7 +1907,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
     }
 
     // Table A.48: PC Relative addressing
-    case 0b10001011: {
+    case sh2e_insn_d_ic_bf: {
         static sh2e_insn_desc_t const bf = {
             .assembly = "BF disp",
             .abstract = "if T = 0, PC + SE(disp) × 2 → PC",
@@ -1894,7 +1919,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &bf;
     }
 
-    case 0b10001111: {
+    case sh2e_insn_d_ic_bfs: {
         static sh2e_insn_desc_t const bfs = {
             .assembly = "BF/S disp",
             .abstract = "if T = 0, PC + 4 + SE(disp) × 2 → PC (delayed)",
@@ -1908,7 +1933,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &bfs;
     }
 
-    case 0b10001001: {
+    case sh2e_insn_d_ic_bt: {
         static sh2e_insn_desc_t const bt = {
             .assembly = "BT disp",
             .abstract = "if T = 1, PC + 4 + SE(disp) × 2 → PC",
@@ -1920,7 +1945,7 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
         return &bt;
     }
 
-    case 0b10001101: {
+    case sh2e_insn_d_ic_bts: {
         static sh2e_insn_desc_t const bts = {
             .assembly = "BT/S disp",
             .abstract = "if T = 1, PC + 4 + SE(disp) × 2 → PC (delayed)",
@@ -1932,6 +1957,9 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
             .branch_cycles = 1,
         };
         return &bts;
+    }
+    default: {
+        return NULL;
     }
     }
 
@@ -1947,7 +1975,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn) {
     switch (insn.ic) {
     // Table A.49: PC relative addressing
-    case 0b1010: {
+    case sh2e_insn_d12_ic_bra: {
         static sh2e_insn_desc_t const bra = {
             .assembly = "BRA disp",
             .abstract = "PC + 4 + SE(disp) × 2 → PC (delayed)",
@@ -1960,7 +1988,7 @@ sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn) {
         return &bra;
     }
 
-    case 0b1011: {
+    case sh2e_insn_d12_ic_bsr: {
         static sh2e_insn_desc_t const bsr = {
             .assembly = "BSR disp",
             .abstract = "PC + 4 → PR, PC + 4 + SE(disp) × 2 → PC (delayed)",
@@ -1986,7 +2014,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_nd8_format(sh2e_insn_nd8_t const insn) {
     switch (insn.ic) {
     // Table A.50: PC relative addressing with displacement
-    case 0b1001: {
+    case sh2e_insn_nd8_ic_movwi: {
         static sh2e_insn_desc_t const movwi = {
             .assembly = "MOV.W @(disp, PC), Rn",
             .abstract = "SE([PC + ZE(disp) × 2]) → Rn",
@@ -1997,7 +2025,7 @@ sh2e_insn_decode_nd8_format(sh2e_insn_nd8_t const insn) {
         return &movwi;
     }
 
-    case 0b1101: {
+    case sh2e_insn_nd8_ic_movli: {
         static sh2e_insn_desc_t const movli = {
             .assembly = "MOV.L @(disp, PC), Rn",
             .abstract = "[PC + ZE(disp) × 4] → Rn",
@@ -2021,7 +2049,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
     switch (insn.ic) {
     // Table A.51: Indirect Indexed GBR
-    case 0b11001100: {
+    case sh2e_insn_i_ic_tstm: {
         static sh2e_insn_desc_t const tstm = {
             .assembly = "TST.B #imm, @(GBR, R0)",
             .abstract = "[GBR + R0] & #imm == 0 → T",
@@ -2032,7 +2060,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &tstm;
     }
 
-    case 0b11001101: {
+    case sh2e_insn_i_ic_andm: {
         static sh2e_insn_desc_t const andm = {
             .assembly = "AND.B #imm, @(GBR, R0)",
             .abstract = "[GBR + R0] & #imm → [GBR + R0]",
@@ -2043,7 +2071,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &andm;
     }
 
-    case 0b11001110: {
+    case sh2e_insn_i_ic_xorm: {
         static sh2e_insn_desc_t const xorm = {
             .assembly = "XOR.B #imm, @(GBR, R0)",
             .abstract = "[GBR + R0] ^ imm → [GBR + R0]",
@@ -2054,7 +2082,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &xorm;
     }
 
-    case 0b11001111: {
+    case sh2e_insn_i_ic_orm: {
         static sh2e_insn_desc_t const orm = {
             .assembly = "OR.B #imm, @(GBR, R0)",
             .abstract = "[GBR + R0] | imm → [GBR + R0]",
@@ -2066,7 +2094,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
     }
 
     // Table A.52: Immediate (Arithmetic Logical Operation with Direct Register)
-    case 0b10001000: {
+    case sh2e_insn_i_ic_cmpim: {
         static sh2e_insn_desc_t const cmpim = {
             .assembly = "CMP/EQ #imm, R0",
             .exec = sh2e_insn_exec_cmpim,
@@ -2076,7 +2104,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &cmpim;
     }
 
-    case 0b11001000: {
+    case sh2e_insn_i_ic_tsti: {
         static sh2e_insn_desc_t const tsti = {
             .assembly = "TST #imm, R0",
             .exec = sh2e_insn_exec_tsti,
@@ -2086,7 +2114,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &tsti;
     }
 
-    case 0b11001001: {
+    case sh2e_insn_i_ic_andi: {
         static sh2e_insn_desc_t const andi = {
             .assembly = "AND #imm, R0",
             .exec = sh2e_insn_exec_andi,
@@ -2096,7 +2124,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &andi;
     }
 
-    case 0b11001010: {
+    case sh2e_insn_i_ic_xori: {
         static sh2e_insn_desc_t const xori = {
             .assembly = "XOR #imm, R0",
             .exec = sh2e_insn_exec_xori,
@@ -2106,7 +2134,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
         return &xori;
     }
 
-    case 0b11001011: {
+    case sh2e_insn_i_ic_ori: {
         static sh2e_insn_desc_t const ori = {
             .assembly = "OR #imm, R0",
             .exec = sh2e_insn_exec_ori,
@@ -2117,7 +2145,7 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
     }
 
     // Table A.53: Immediate (Specify Exception Processing Vector)
-    case 0b11000011: {
+    case sh2e_insn_i_ic_trapa: {
         static sh2e_insn_desc_t const trapa = {
             .assembly = "TRAPA #imm",
             .exec = sh2e_insn_exec_trapa,
@@ -2125,6 +2153,10 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
             .cycles = 8,
         };
         return &trapa;
+    }
+
+    default: {
+        return NULL;
     }
     }
 
@@ -2140,7 +2172,7 @@ static sh2e_insn_desc_t const *
 sh2e_insn_decode_ni_format(sh2e_insn_ni_t const insn) {
     // Table A.54: Immediate addressing (direct register arithmetic operations and data transfers)
     switch (insn.ic) {
-    case 0b0111: {
+    case sh2e_insn_ni_ic_addi: {
         static sh2e_insn_desc_t const addi = {
             .assembly = "ADD #imm, Rn",
             .abstract = "Rn + SE(#imm) → Rn",
@@ -2151,7 +2183,7 @@ sh2e_insn_decode_ni_format(sh2e_insn_ni_t const insn) {
         return &addi;
     }
 
-    case 0b1110: {
+    case sh2e_insn_ni_ic_movi: {
         static sh2e_insn_desc_t const movi = {
             .assembly = "MOV #imm, Rn",
             .abstract = "SE(#imm) → Rn",
@@ -2177,7 +2209,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
 
     // MSIM specific instruction to halt the machine
     // .word 0x8200
-    case 0b1000001000000000: {
+    case sh2e_insn_z_ic_halt: {
         static sh2e_insn_desc_t const halt = {
             .assembly = "HALT",
             .abstract = "(halt machine)",
@@ -2189,7 +2221,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
     }
 
     // .word 0x8201
-    case 0b1000001000000001: {
+    case sh2e_insn_z_ic_cpu_reg_dump: {
         static sh2e_insn_desc_t const cpu_reg_dump = {
             .assembly = "CPU REG DUMP",
             .abstract = "(cpu registers dump)",
@@ -2201,7 +2233,7 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
     }
 
     // .word 0x8202
-    case 0b1000001000000010: {
+    case sh2e_insn_z_ic_fpu_reg_dump: {
         static sh2e_insn_desc_t const fpu_reg_dump = {
             .assembly = "FPU REG DUMP",
             .abstract = "(fpu registers dump)",
@@ -2211,9 +2243,10 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
         };
         return machine_specific_instructions ? &fpu_reg_dump : &illegal;
     }
+    default: {
+        return NULL;
     }
-
-    return NULL;
+    }
 }
 
 /****************************************************************************
