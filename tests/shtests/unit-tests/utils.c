@@ -234,13 +234,13 @@ sh2e_insn_nmd_t insn_movll4 = {
 };
 
 sh2e_insn_nd4_t insn_movbs4 = {
-    .ic = 0b10000000,
+    .ic = sh2e_insn_nd4_ic_movbs4,
     .rn = R0_REG,
     .d4 = 0x0,
 };
 
 sh2e_insn_nd4_t insn_movws4 = {
-    .ic = 0b10000001,
+    .ic = sh2e_insn_nd4_ic_movws4,
     .rn = R0_REG,
     .d4 = 0x0,
 };
