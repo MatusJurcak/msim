@@ -215,7 +215,7 @@ typedef union sh2e_fpu_scr {
         uint32_t fi : 1; /** Inexact exception flag. Wired to 0 on SH-2E. */
         uint32_t fu : 1; /** Underflow exception flag. Wired to 0 on SH-2E. */
         uint32_t fo : 1; /** Overflow exception flag. Wired to 0 on SH-2E. */
-        uint32_t fz : 1; /** Division-by-zero flat. */
+        uint32_t fz : 1; /** Division-by-zero flag. */
         uint32_t fv : 1; /** Invalid operation flag. */
 
         uint32_t ei : 1; /** Inexact exception enable. Wired to 0 on SH-2E. */

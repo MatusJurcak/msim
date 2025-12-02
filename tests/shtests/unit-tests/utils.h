@@ -9,12 +9,15 @@
 #define R1_REG 1
 #define FR0_REG 0
 #define FR1_REG 1
+#define FR2_REG 2
 
 // Floating-point special values
 extern float32_bits_t signaling_nan;
 extern float32_bits_t quiet_nan;
 extern float32_bits_t positive_inf_num;
 extern float32_bits_t negative_inf_num;
+extern float32_bits_t positive_zero_num;
+extern float32_bits_t negative_zero_num;
 
 // Instructions
 extern sh2e_insn_d_t insn_bt;

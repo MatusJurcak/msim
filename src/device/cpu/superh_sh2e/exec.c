@@ -1750,6 +1750,13 @@ __qnan(uint16_t const bits) {
     });
 }
 
+static ALWAYS_INLINE bool
+is_qnan(float32_t const value) {
+    float32_bits_t const value_bits = { .fvalue = value };
+    bool quiet_bit = (value_bits.mantissa >> 22) & 1;
+
+    return (value_bits.exponent == 0xFF) && (value_bits.mantissa != 0) && (quiet_bit == 0);
+}
 
 static ALWAYS_INLINE void
 sh2e_cpu_clear_cv_cz(sh2e_cpu_t * const restrict cpu) {
@@ -1762,6 +1769,12 @@ static ALWAYS_INLINE void
 sh2e_cpu_set_cv_fv(sh2e_cpu_t * const restrict cpu) {
     cpu->fpu_regs.fpscr.cv = 1;
     cpu->fpu_regs.fpscr.fv = 1;
+}
+
+static ALWAYS_INLINE void
+sh2e_cpu_set_cz_fz(sh2e_cpu_t * const restrict cpu) {
+    cpu->fpu_regs.fpscr.cz = 1;
+    cpu->fpu_regs.fpscr.fz = 1;
 }
 
 
@@ -1869,10 +1882,46 @@ sh2e_insn_exec_fdiv(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     sh2e_cpu_clear_cv_cz(cpu);
     float32_t const frn = cpu->fpu_regs.general[insn.rn];
     float32_t const frm = cpu->fpu_regs.general[insn.rm];
-    float32_t const result = frn / frm;
+    float32_t result;
 
-    // TODO Handle exceptions.
-    // FDIV special cases (REJ09B0316-0200, page 180).
+    // Invalid operation exception
+    if (
+        // Any of FRn and FRm is a signaling NaN.
+        __is_snan(frn) || __is_snan(frm) ||
+        // Both FRn and FRm are infinite.
+        (isinf(frn) && isinf(frm)) ||
+        // Both FRn and FRm are zero.
+        (fpclassify(frn) == FP_ZERO && fpclassify(frm) == FP_ZERO)
+    ) {
+        // FDIV special cases (REJ09B0316-0200, page 180).
+        sh2e_cpu_set_cv_fv(cpu);
+        if (cpu->fpu_regs.fpscr.ev) {
+            return SH2E_EXCEPTION_FPU_OPERATION;
+        }
+        result = __qnan(insn.word);
+    }
+
+    // Division by zero exception
+    else if ((fpclassify(frm) == FP_ZERO) && !is_qnan(frn) && !isinf(frn)) {
+        sh2e_cpu_set_cz_fz(cpu);
+        if (cpu->fpu_regs.fpscr.ez) {
+            return SH2E_EXCEPTION_FPU_OPERATION;
+        }
+
+        float32_bits_t n = { .fvalue = frn };
+        float32_bits_t m = { .fvalue = frm };
+        float32_bits_t inf = {
+            .sign = n.sign ^ m.sign,
+            .exponent = 0xFF,
+            .mantissa = 0
+        };
+        result = inf.fvalue;
+    }
+
+    else {
+        result = frn / frm;
+    }
+
     cpu->fpu_regs.general[insn.rn] = result;
     return SH2E_EXCEPTION_NONE;
 }
@@ -1917,13 +1966,43 @@ sh2e_insn_exec_float(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn) 
 sh2e_exception_t
 sh2e_insn_exec_fmac(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
     sh2e_cpu_clear_cv_cz(cpu);
-    float32_t const fr0 = cpu->fpu_regs.fr0;
-    float32_t const frm = cpu->fpu_regs.general[insn.rm];
-    float32_t const frn = cpu->fpu_regs.general[insn.rn];
+    sh2e_fpu_scr_t tmp_fpscr;
 
-    // TODO Handle exceptions.
-    cpu->fpu_regs.general[insn.rn] = fmaf(fr0, frm, frn);
-    return SH2E_EXCEPTION_NONE;
+    sh2e_insn_nm_t const fmac_fmul_insn = {
+        .ic_h = sh2e_insn_nm_ic_h_fmul,
+        .ic_l = sh2e_insn_nm_ic_l_fmul,
+        // Use FR0 as the first operand
+        .rn = 0,
+        // Use FRm as the second operand
+        .rm = insn.rm,
+    };
+
+    // Call the FMUL instruction to perform FR0*FRm
+    sh2e_exception_t const fmac_fmul_ex = sh2e_insn_exec_fmul(cpu, fmac_fmul_insn);
+
+    if (fmac_fmul_ex != SH2E_EXCEPTION_NONE) {
+        return fmac_fmul_ex;
+    }
+
+    /* save cause field for FR0*FRm */
+    tmp_fpscr = cpu->fpu_regs.fpscr;
+
+    sh2e_insn_nm_t const fmac_fadd_insn = {
+        .ic_h = sh2e_insn_nm_ic_h_fadd,
+        .ic_l = sh2e_insn_nm_ic_l_fadd,
+        // Use FR0 as the first operand
+        .rn = 0,
+        // Use FRn as the second operand
+        .rm = insn.rn,
+    };
+
+    // Call the FADD instruction to perform (FR0*FRm)+FRn
+    sh2e_exception_t const fmac_fadd_ex = sh2e_insn_exec_fadd(cpu, fmac_fadd_insn);
+
+    /* reflect cause field for F0*FRm*/
+    cpu->fpu_regs.fpscr.value |= tmp_fpscr.value;
+
+    return fmac_fadd_ex;
 }
 
 // FMOV (Floating Point Move): Floating Point Instruction
@@ -2006,7 +2085,6 @@ sh2e_insn_exec_fmul(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     float32_t const frn = cpu->fpu_regs.general[insn.rn];
     float32_t const frm = cpu->fpu_regs.general[insn.rm];
 
-    // TODO Handle exceptions.
     float32_t result = frn * frm;
     if (isnan(result) && (
             // Any of FRn and FRm is a signaling NaN.
