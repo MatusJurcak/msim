@@ -28,6 +28,20 @@ float32_bits_t negative_inf_num = {
     // This represents the negative infinity number
 };
 
+float32_bits_t positive_zero_num = {
+    .sign = 0,
+    .exponent = 0,
+    .mantissa = 0,
+    // This represents the positive zero number
+};
+
+float32_bits_t negative_zero_num = {
+    .sign = 1,
+    .exponent = 0,
+    .mantissa = 0,
+    // This represents the negative zero number
+};
+
 sh2e_insn_d_t insn_bt = {
     .ic = sh2e_insn_d_ic_bt,
     .d8 = 0x0,
@@ -1005,7 +1019,8 @@ sh2e_insn_n_t insn_float = {
 
 sh2e_insn_nm_t insn_fmac = {
     .ic_h = sh2e_insn_nm_ic_h_fmac,
-    .rn = FR0_REG,
+    // FR2 here in order to use 3 registers instead of 2 (FMAC uses FR0,FRm and FRn)
+    .rn = FR2_REG,
     .rm = FR1_REG,
     .ic_l = sh2e_insn_nm_ic_l_fmac,
 };
