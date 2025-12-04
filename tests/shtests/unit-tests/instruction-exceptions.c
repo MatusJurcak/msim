@@ -1612,7 +1612,33 @@ PCUT_TEST(fadd_no_ex)
     PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_NONE, ex);
 }
 
-PCUT_TEST(fadd_fpu_operation_ex)
+PCUT_TEST(fadd_ninf_pinf_fpu_operation_ex)
+{
+    cpu1.fpu_regs.general[insn_fadd.rn] = positive_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fadd.rm] = negative_inf_num.fvalue;
+
+    // Have to enable this bit to raise FPU operation exception
+    cpu1.fpu_regs.fpscr.ev = 0x1;
+
+    sh2e_exception_t ex = sh2e_insn_exec_fadd(&cpu1, insn_fadd);
+
+    PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_FPU_OPERATION, ex);
+}
+
+PCUT_TEST(fadd_pinf_ninf_fpu_operation_ex)
+{
+    cpu1.fpu_regs.general[insn_fadd.rn] = negative_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fadd.rm] = positive_inf_num.fvalue;
+
+    // Have to enable this bit to raise FPU operation exception
+    cpu1.fpu_regs.fpscr.ev = 0x1;
+
+    sh2e_exception_t ex = sh2e_insn_exec_fadd(&cpu1, insn_fadd);
+
+    PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_FPU_OPERATION, ex);
+}
+
+PCUT_TEST(fadd_snan_fpu_operation_ex)
 {
     cpu1.fpu_regs.general[insn_fadd.rn] = signaling_nan.fvalue;
 
@@ -1837,6 +1863,62 @@ PCUT_TEST(fmac_zero_pinf_ninf_fpu_operation_ex)
 {
     cpu1.fpu_regs.general[0] = positive_zero_num.fvalue;
     cpu1.fpu_regs.general[insn_fmac.rm] = positive_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fmac.rn] = negative_inf_num.fvalue;
+
+    // Have to enable this bit to raise FPU exception
+    cpu1.fpu_regs.fpscr.ev = 0x1;
+
+    sh2e_exception_t ex = sh2e_insn_exec_fmac(&cpu1, insn_fmac);
+
+    PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_FPU_OPERATION, ex);
+}
+
+PCUT_TEST(fmac_nnorm_pinf_pinf_fpu_operation_ex)
+{
+    cpu1.fpu_regs.general[0] = -1.0f;
+    cpu1.fpu_regs.general[insn_fmac.rm] = positive_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fmac.rn] = positive_inf_num.fvalue;
+
+    // Have to enable this bit to raise FPU exception
+    cpu1.fpu_regs.fpscr.ev = 0x1;
+
+    sh2e_exception_t ex = sh2e_insn_exec_fmac(&cpu1, insn_fmac);
+
+    PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_FPU_OPERATION, ex);
+}
+
+PCUT_TEST(fmac_inf_zero_qnan_fpu_operation_ex)
+{
+    cpu1.fpu_regs.general[0] = positive_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fmac.rm] = negative_zero_num.fvalue;
+    cpu1.fpu_regs.general[insn_fmac.rn] = quiet_nan.fvalue;
+
+    // Have to enable this bit to raise FPU exception
+    cpu1.fpu_regs.fpscr.ev = 0x1;
+
+    sh2e_exception_t ex = sh2e_insn_exec_fmac(&cpu1, insn_fmac);
+
+    PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_FPU_OPERATION, ex);
+}
+
+PCUT_TEST(fmac_ninf_pnorm_pinf_fpu_operation_ex)
+{
+    cpu1.fpu_regs.general[0] = negative_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fmac.rm] = 1.0f;
+    cpu1.fpu_regs.general[insn_fmac.rn] = positive_inf_num.fvalue;
+
+    // Have to enable this bit to raise FPU exception
+    cpu1.fpu_regs.fpscr.ev = 0x1;
+
+    sh2e_exception_t ex = sh2e_insn_exec_fmac(&cpu1, insn_fmac);
+
+    PCUT_ASSERT_INT_EQUALS(SH2E_EXCEPTION_FPU_OPERATION, ex);
+}
+
+PCUT_TEST(fmac_pinf_pnorm_ninf_fpu_operation_ex)
+{
+    cpu1.fpu_regs.general[0] = positive_inf_num.fvalue;
+    cpu1.fpu_regs.general[insn_fmac.rm] = 1.0f;
     cpu1.fpu_regs.general[insn_fmac.rn] = negative_inf_num.fvalue;
 
     // Have to enable this bit to raise FPU exception
