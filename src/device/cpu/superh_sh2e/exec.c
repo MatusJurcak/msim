@@ -1758,6 +1758,18 @@ is_qnan(float32_t const value) {
     return (value_bits.exponent == 0xFF) && (value_bits.mantissa != 0) && (quiet_bit == 0);
 }
 
+static ALWAYS_INLINE bool
+is_pos_inf(float32_t const value) {
+    float32_bits_t const value_bits = { .fvalue = value };
+    return (value_bits.sign == 0) && (value_bits.exponent == 0xFF) && (value_bits.mantissa == 0);
+}
+
+static ALWAYS_INLINE bool
+is_neg_inf(float32_t const value) {
+    float32_bits_t const value_bits = { .fvalue = value };
+    return (value_bits.sign == 1) && (value_bits.exponent == 0xFF) && (value_bits.mantissa == 0);
+}
+
 static ALWAYS_INLINE void
 sh2e_cpu_clear_cv_cz(sh2e_cpu_t * const restrict cpu) {
     cpu->fpu_regs.fpscr.cv = 0;
@@ -1813,7 +1825,7 @@ sh2e_insn_exec_fadd(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
             // Any of FRn and FRm is a signaling NaN.
             __is_snan(frn) || __is_snan(frm) ||
             // Both FRn and FRm are infinite but with different sign.
-            (isinf(frn) * isinf(frm) < 0)
+            (is_neg_inf(frn) && is_pos_inf(frm)) || (is_pos_inf(frn) && is_neg_inf(frm))
         )) {
         // FADD special cases (REJ09B0316-0200, page 173).
         sh2e_cpu_set_cv_fv(cpu);
