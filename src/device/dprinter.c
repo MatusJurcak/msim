@@ -76,7 +76,7 @@ static bool dprinter_init(token_t *parm, device_t *dev)
     data->file = stdout;
     data->fname = NULL;
     data->count = 0;
-    data->endianness = false;
+    data->endianness = true;
 
     return true;
 }
@@ -175,14 +175,60 @@ static bool dprinter_endian(token_t *parm, device_t *dev)
     char *endian = parm_str(parm);
 
     if (strcmp(endian, "big") == 0) {
-        data->endianness = true;
-    } else {
         data->endianness = false;
+    } else {
+        data->endianness = true;
     }
+
     return true;
 }
 
-/** Write command implementation
+/** Write byte command implementation
+ *
+ */
+static void printer_write8(unsigned int procno, device_t *dev, ptr36_t addr, uint8_t val)
+{
+    ASSERT(dev != NULL);
+
+    printer_data_t *data = (printer_data_t *) dev->data;
+
+    switch (addr - data->addr) {
+    case REGISTER_CHAR:
+        fprintf(data->file, "%c", (char) val);
+        /* Write to console is flushed immediately */
+        /* This makes debugging somewhat easier */
+        if (data->file == stdout) {
+            fflush(data->file);
+        }
+        data->count++;
+        break;
+    }
+}
+
+/** Write 16-bit word command implementation
+ *
+ */
+static void printer_write16(unsigned int procno, device_t *dev, ptr36_t addr, uint16_t val)
+{
+    ASSERT(dev != NULL);
+
+    printer_data_t *data = (printer_data_t *) dev->data;
+    uint16_t value = data->endianness ? le16toh(val) : be16toh(val);
+
+    switch (addr - data->addr) {
+    case REGISTER_CHAR:
+        fprintf(data->file, "%c", (char) value);
+        /* Write to console is flushed immediately */
+        /* This makes debugging somewhat easier */
+        if (data->file == stdout) {
+            fflush(data->file);
+        }
+        data->count++;
+        break;
+    }
+}
+
+/** Write 32-bit word command implementation
  *
  */
 static void printer_write32(unsigned int procno, device_t *dev, ptr36_t addr, uint32_t val)
@@ -190,7 +236,7 @@ static void printer_write32(unsigned int procno, device_t *dev, ptr36_t addr, ui
     ASSERT(dev != NULL);
 
     printer_data_t *data = (printer_data_t *) dev->data;
-    uint32_t value = data->endianness ? be32toh(val) : le32toh(val);
+    uint32_t value = data->endianness ? le32toh(val) : be32toh(val);
 
     switch (addr - data->addr) {
     case REGISTER_CHAR:
@@ -276,6 +322,8 @@ device_type_t dprinter = {
 
     /* Functions */
     .done = printer_done,
+    .write8 = printer_write8,
+    .write16 = printer_write16,
     .write32 = printer_write32,
 
     /* Commands */

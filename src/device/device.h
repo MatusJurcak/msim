@@ -46,6 +46,10 @@ typedef struct {
             uint64_t *val);
 
     /** Device memory write */
+    void (*write8)(unsigned int procno, struct device *dev, ptr36_t addr,
+            uint8_t val);
+    void (*write16)(unsigned int procno, struct device *dev, ptr36_t addr,
+            uint16_t val);
     void (*write32)(unsigned int procno, struct device *dev, ptr36_t addr,
             uint32_t val);
     void (*write64)(unsigned int procno, struct device *dev, ptr36_t addr,

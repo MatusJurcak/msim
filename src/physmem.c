@@ -388,8 +388,12 @@ static bool devmem_write8(unsigned int procno, ptr36_t addr, uint8_t val)
     /* List for each device */
     device_t *dev = NULL;
     while (dev_next(&dev, DEVICE_FILTER_ALL)) {
-        if (dev->type->write32) {
-            dev->type->write32(procno, dev, addr, val);
+        if (dev->type->write8) {
+            dev->type->write8(procno, dev, addr, val);
+            written = true;
+        } else if (dev->type->write32) {
+            /* Some devices may only support 32-bit writes */
+            dev->type->write32(procno, dev, addr, (uint32_t) val);
             written = true;
         }
     }
@@ -404,8 +408,13 @@ static bool devmem_write16(unsigned int procno, ptr36_t addr, uint16_t val)
     /* List for each device */
     device_t *dev = NULL;
     while (dev_next(&dev, DEVICE_FILTER_ALL)) {
-        if (dev->type->write32) {
-            dev->type->write32(procno, dev, addr, val);
+        if (dev->type->write16) {
+            dev->type->write16(procno, dev, addr, val);
+            written = true;
+        } else if (dev->type->write32) {
+            /* Some devices may only support 32-bit writes */
+            uint32_t value = (uint32_t) val;
+            dev->type->write32(procno, dev, addr, value);
             written = true;
         }
     }
