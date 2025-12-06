@@ -535,11 +535,11 @@ typedef struct {
 #ifdef WORDS_BIGENDIAN
     sh2e_insn_nmd_ic_t ic : 4;
     uint16_t rn : 4;
-    uint16_t d4 : 4;
     uint16_t rm : 4;
+    uint16_t d4 : 4;
 #else
-    uint16_t rm : 4;
     uint16_t d4 : 4;
+    uint16_t rm : 4;
     uint16_t rn : 4;
     sh2e_insn_nmd_ic_t ic : 4;
 #endif
