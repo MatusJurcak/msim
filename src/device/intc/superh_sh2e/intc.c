@@ -10,74 +10,56 @@
 
 #define address(ptr) (uintptr_t) (ptr)
 
-static sh2e_intc_icr_t
+sh2e_intc_icr_t
 sh2e_intc_icr_reg_read(sh2e_intc_t * intc) {
-    return (sh2e_intc_icr_t) be16toh(physmem_read16(0, address(&intc->intc_regs->icr), true));
+    return intc->intc_regs.icr;
 }
 
-static sh2e_intc_isr_t
+sh2e_intc_isr_t
 sh2e_intc_isr_reg_read(sh2e_intc_t * intc) {
-    return (sh2e_intc_isr_t) be16toh(physmem_read16(0, address(&intc->intc_regs->isr), true));
+    return intc->intc_regs.isr;
 }
 
-static void
+void
 sh2e_intc_icr_reg_write(sh2e_intc_t * intc, uint16_t value) {
-    physmem_write16(0, address(&intc->intc_regs->icr), htobe16(value), true);
+    intc->intc_regs.icr.value = value;
 }
 
-static void
+void
 sh2e_intc_isr_reg_write(sh2e_intc_t * intc, uint16_t value) {
-    physmem_write16(0, address(&intc->intc_regs->isr), htobe16(value), true);
+    intc->intc_regs.isr.value = value;
 }
 
-static uint16_t
+uint16_t
 sh2e_intc_priority_register_read(sh2e_intc_t * intc, uint8_t index) {
     ASSERT(index < SH2E_INTC_IPR_REGISTERS_COUNT && "wrong index for priority register");
-    return be16toh(physmem_read16(0, address(&intc->intc_regs->priority[index]), true));
+    return intc->intc_regs.priority[index];
 }
 
-static void
+void
 sh2e_intc_priority_register_write(sh2e_intc_t * intc, uint8_t index, uint16_t value) {
     ASSERT(index < SH2E_INTC_IPR_REGISTERS_COUNT && "wrong index for priority register");
-
-    physmem_write16(0, address(&intc->intc_regs->priority[index]), htobe16(value), true);
+    intc->intc_regs.priority[index] = value;
 }
 
 void
 sh2e_intc_init_regs(sh2e_intc_t * intc) {
     ASSERT(intc != NULL);
 
-    /** Setup the priority registers */
-    for (size_t i = 0; i < SH2E_INTC_IPR_REGISTERS_COUNT; i++) {
-        sh2e_intc_priority_register_write(intc, i, 0);
-    }
-
-    /** Setup the system registers */
     // TODO: if the NMI pin is high the value of ICR should be H'8000
-    sh2e_intc_icr_reg_write(intc, 0);
-    sh2e_intc_isr_reg_write(intc, 0);
+    memset(&intc->intc_regs, 0, sizeof(sh2e_intc_regs_t));
 }
 
 void
-sh2e_intc_init(sh2e_intc_t * intc, unsigned int id) {
+sh2e_intc_init(sh2e_intc_t * intc, unsigned int id, uint64_t regs_addr) {
     memset(intc, 0, sizeof(sh2e_intc_t));
 
     intc->id = id;
 
-    intc->intc_regs = (sh2e_intc_regs_t *) (address(SH2E_INTC_REGISTERS_START_ADDRESS));
+    intc->regs_addr = regs_addr;
 
     sh2e_intc_init_regs(intc);
 }
-
-void
-sh2e_intc_change_regs_address(sh2e_intc_t * intc, uint32_t regs_addr) {
-    ASSERT(intc != NULL);
-
-    intc->intc_regs = (sh2e_intc_regs_t *) (address(regs_addr));
-
-    sh2e_intc_init_regs(intc);
-}
-
 
 void
 sh2e_intc_done(sh2e_intc_t * intc) {
@@ -103,15 +85,11 @@ sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id, uint8_t pr
 
     // Do not set priority into the registers for reset sources
     if (!SH2E_INTC_VALID_RESET_ID(source_id)) {
-        uint16_t priority_register = sh2e_intc_priority_register_read(intc, priority_pool_index / 4);
-
         // Need this in order to reverse the order and shift correctly
         int shift = (3 - (priority_pool_index % 4)) * 4;
 
-        priority_register &= ~(0xF << shift);
-        priority_register |= (priority & 0xF) << shift;
-
-        sh2e_intc_priority_register_write(intc, priority_pool_index / 4, priority_register);
+        intc->intc_regs.priority[priority_pool_index / 4] &= ~(0xF << shift);
+        intc->intc_regs.priority[priority_pool_index / 4] |= (priority & 0xF) << shift;
     }
 }
 
@@ -119,7 +97,7 @@ static bool
 sh2e_check_nmi_interrupt(sh2e_intc_t * intc) {
     ASSERT(intc != NULL);
 
-    sh2e_intc_icr_t icr = sh2e_intc_icr_reg_read(intc);
+    sh2e_intc_icr_t icr = intc->intc_regs.icr;
     bool detected = false;
     if (icr.nmie) {
         // NMI interrupt is detected on the rising edge of the NMI pin
@@ -137,10 +115,9 @@ sh2e_check_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
     ASSERT(intc != NULL);
     ASSERT(irq_index < SH2E_INTC_IRQ_NUMBER_OF_SOURCES && "IRQ index out of range");
 
-    sh2e_intc_isr_t isr = sh2e_intc_isr_reg_read(intc);
     uint8_t shift = 7 - irq_index;
 
-    return (isr.value >> shift) & 1;
+    return (intc->intc_regs.isr.value >> shift) & 1;
 }
 
 static void
@@ -148,11 +125,9 @@ sh2e_assert_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
     ASSERT(intc != NULL);
     ASSERT(irq_index < SH2E_INTC_IRQ_NUMBER_OF_SOURCES && "IRQ index out of range");
 
-    sh2e_intc_isr_t isr = sh2e_intc_isr_reg_read(intc);
     uint8_t shift = 7 - irq_index;
 
-    isr.value |= (1 << shift);
-    sh2e_intc_isr_reg_write(intc, isr.value);
+    intc->intc_regs.isr.value |= (1 << shift);
 }
 
 static void
@@ -160,16 +135,12 @@ sh2e_clear_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
     ASSERT(intc != NULL);
     ASSERT(irq_index < SH2E_INTC_IRQ_NUMBER_OF_SOURCES && "IRQ index out of range");
 
-    sh2e_intc_icr_t icr = sh2e_intc_icr_reg_read(intc);
-    sh2e_intc_isr_t isr = sh2e_intc_isr_reg_read(intc);
-
     uint8_t shift = 7 - irq_index;
-    uint8_t irq_sense = (icr.value >> shift) & 1;
+    uint8_t irq_sense = (intc->intc_regs.icr.value >> shift) & 1;
 
     // Edge detection
     if (irq_sense) {
-        isr.value &= ~(1 << shift);
-        sh2e_intc_isr_reg_write(intc, isr.value);
+        intc->intc_regs.isr.value &= ~(1 << shift);
     }
 
     // If the level detection is used, the interrupt request remains set until the IRQ pin is cleared
@@ -177,7 +148,7 @@ sh2e_clear_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
 
 
 static uint8_t
-sh2e_get_priority(sh2e_intc_source_t * source, uint16_t * priority_regs) {
+sh2e_get_priority(sh2e_intc_t * intc, sh2e_intc_source_t * source) {
     ASSERT(source != NULL);
 
     uint8_t reg_index = source->priority_pool_index / 4;
@@ -186,7 +157,7 @@ sh2e_get_priority(sh2e_intc_source_t * source, uint16_t * priority_regs) {
     // Need this in order to reverse the order and shift correctly
     int shift = (3 - half_byte_index) * 4;
 
-    return (priority_regs[reg_index] >> shift) & 0x0F;
+    return (intc->intc_regs.priority[reg_index] >> shift) & 0x0F;
 }
 
 bool
@@ -201,12 +172,6 @@ sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask, uint8_t * interr
         return SH2E_INTC_NMI_VECTOR_ADDRESS_OFFSET;
     }
 
-    // Load all priority registers
-    uint16_t priority_regs[SH2E_INTC_IPR_REGISTERS_COUNT];
-    for (int i = 0; i < SH2E_INTC_IPR_REGISTERS_COUNT; i++) {
-        priority_regs[i] = sh2e_intc_priority_register_read(intc, i);
-    }
-
     uint8_t interrupt_source = 0;
     uint32_t interrupt_priority = 0;
 
@@ -215,7 +180,7 @@ sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask, uint8_t * interr
         if (SH2E_INTC_VALID_SOURCE_ID(i) && intc->sources[i].registered) {
             bool interrupt_pending = SH2E_INTC_VALID_IRQ_SOURCE_ID(i) ? sh2e_check_irq_interrupt(intc, i - SH2E_INTC_IRQ_VECTOR_ADDRESS_OFFSET) : intc->sources[i].pending;
             if (interrupt_pending) {
-                uint32_t curr_priority = (uint32_t) sh2e_get_priority(&intc->sources[i], priority_regs);
+                uint32_t curr_priority = (uint32_t) sh2e_get_priority(intc, &intc->sources[i]);
                 if ((curr_priority > interrupt_priority || !interrupt_source) && curr_priority > mask) {
                     interrupt_priority = curr_priority;
                     interrupt_source = i;
