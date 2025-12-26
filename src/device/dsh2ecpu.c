@@ -185,7 +185,7 @@ static bool dsh2ecpu_cmd_assert_interrupt(token_t *parm, device_t *const dev)
     return true;
 }
 
-static bool dsh2ecpu_cmd_add_intc(token_t *parm, device_t *const dev)
+static bool dsh2ecpu_cmd_set_intc(token_t *parm, device_t *const dev)
 {
     ASSERT(dev != NULL);
 
@@ -290,12 +290,12 @@ static cmd_t const dsh2ecpu_cmds[] = {
             "Assert interrupt",
             "Assert interrupt <interrupt_source>",
             REQ INT "interrupt_source" END },
-    { "addintc",
-            (fcmd_t) dsh2ecpu_cmd_add_intc,
+    { "setintc",
+            (fcmd_t) dsh2ecpu_cmd_set_intc,
             DEFAULT,
             DEFAULT,
-            "Add interrupt controller",
-            "Add interrupt controller <intc_device_name>",
+            "Set interrupt controller",
+            "Set interrupt controller <intc_device_name>",
             REQ STR "intc_device_name" END },
     LAST_CMD
 };
