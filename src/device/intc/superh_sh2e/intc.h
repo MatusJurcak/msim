@@ -20,13 +20,27 @@
 #define PACKED __attribute__((packed))
 #endif
 
+#define SH2E_INTC_IPRA_REGISTER_ADDRESS_OFFSET 0x0
+#define SH2E_INTC_IPRB_REGISTER_ADDRESS_OFFSET 0x2
+#define SH2E_INTC_IPRC_REGISTER_ADDRESS_OFFSET 0x4
+#define SH2E_INTC_IPRD_REGISTER_ADDRESS_OFFSET 0x6
+#define SH2E_INTC_IPRE_REGISTER_ADDRESS_OFFSET 0x8
+#define SH2E_INTC_IPRF_REGISTER_ADDRESS_OFFSET 0xA
+#define SH2E_INTC_IPRG_REGISTER_ADDRESS_OFFSET 0xC
+#define SH2E_INTC_IPRH_REGISTER_ADDRESS_OFFSET 0xE
+#define SH2E_INTC_IPRI_REGISTER_ADDRESS_OFFSET 0x10
+#define SH2E_INTC_IPRJ_REGISTER_ADDRESS_OFFSET 0x12
+#define SH2E_INTC_IPRK_REGISTER_ADDRESS_OFFSET 0x14
+#define SH2E_INTC_IPRL_REGISTER_ADDRESS_OFFSET 0x16
+#define SH2E_INTC_ICR_REGISTER_ADDRESS_OFFSET 0x18
+#define SH2E_INTC_ISR_REGISTER_ADDRESS_OFFSET 0x1A
+
 #define SH2E_INTC_REGISTERS_START_ADDRESS UINT32_C(0xFFFFED00)
 #define SH2E_INTC_IPR_REGISTERS_COUNT 12
 #define SH2E_INTC_SYSTEM_REGISTERS_COUNT 2
 #define SH2E_INTC_PRIORITY_MAX_VALUE 15
 #define SH2E_INTC_SOURCE_MAX_VALUE 255
 #define SH2E_INTC_IPR_HALF_BYTES_LENGTH (SH2E_INTC_IPR_REGISTERS_COUNT * 4)
-#define SH2E_INTC_INTERRUPT_POOL_SIZE 16
 
 #define SH2E_INTC_POWER_ON_RESET_EXTERNAL_OFFSET 0
 #define SH2E_INTC_POWER_ON_RESET_INTERNAL_OFFSET 1
@@ -136,8 +150,9 @@ typedef struct sh2e_intc_source {
 } sh2e_intc_source_t;
 
 typedef struct sh2e_intc {
+    uint64_t regs_addr; /** Base address of the INTC registers */
 
-    sh2e_intc_regs_t * intc_regs; /** Interrupt controller registers */
+    sh2e_intc_regs_t intc_regs; /** Interrupt controller registers */
 
     uint16_t nmi_prev_value; /** Previous value of NMI pin */
 
@@ -154,11 +169,9 @@ typedef struct sh2e_intc {
 } sh2e_intc_t;
 
 
-extern void sh2e_intc_init(sh2e_intc_t * intc, unsigned int id);
+extern void sh2e_intc_init(sh2e_intc_t * intc, unsigned int id, uint64_t regs_addr);
 
 extern void sh2e_intc_init_regs(sh2e_intc_t * intc);
-
-extern void sh2e_intc_change_regs_address(sh2e_intc_t * intc, uint32_t regs_addr);
 
 extern void sh2e_intc_done(sh2e_intc_t * intc);
 
@@ -175,5 +188,19 @@ extern void sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id
 extern void sh2e_intc_assert_interrupt(sh2e_intc_t * intc, unsigned int num);
 
 extern void sh2e_intc_deassert_interrupt(sh2e_intc_t * intc, unsigned int num);
+
+// Register read functions
+extern sh2e_intc_icr_t sh2e_intc_icr_reg_read(sh2e_intc_t * intc);
+
+extern sh2e_intc_isr_t sh2e_intc_isr_reg_read(sh2e_intc_t * intc);
+
+extern uint16_t sh2e_intc_priority_register_read(sh2e_intc_t * intc, uint8_t index);
+
+// Register write functions
+extern void sh2e_intc_icr_reg_write(sh2e_intc_t * intc, uint16_t value);
+
+extern void sh2e_intc_isr_reg_write(sh2e_intc_t * intc, uint16_t value);
+
+extern void sh2e_intc_priority_register_write(sh2e_intc_t * intc, uint8_t index, uint16_t value);
 
 #endif // SUPERH_SH2E_INTC_H_

@@ -174,7 +174,9 @@ static uint8_t devmem_read8(unsigned int procno, ptr36_t addr)
     /* List for each device */
     device_t *dev = NULL;
     while (dev_next(&dev, DEVICE_FILTER_ALL)) {
-        if (dev->type->read32) {
+        if (dev->type->read8) {
+            dev->type->read8(procno, dev, addr, (uint8_t *) &val);
+        } else if (dev->type->read32) {
             dev->type->read32(procno, dev, addr, &val);
         }
     }
@@ -189,7 +191,9 @@ static uint16_t devmem_read16(unsigned int procno, ptr36_t addr)
     /* List for each device */
     device_t *dev = NULL;
     while (dev_next(&dev, DEVICE_FILTER_ALL)) {
-        if (dev->type->read32) {
+        if (dev->type->read16) {
+            dev->type->read16(procno, dev, addr, (uint16_t *) &val);
+        } else if (dev->type->read32) {
             dev->type->read32(procno, dev, addr, &val);
         }
     }

@@ -28,14 +28,41 @@ dsh2eintc_cmd_init(token_t *parm, device_t *const dev)
 {
     ASSERT(dev != NULL);
 
+    parm_next(&parm);
+
+    uint64_t _addr;
+    if (parm_type(parm) == tt_end) {
+        _addr = SH2E_INTC_REGISTERS_START_ADDRESS;
+    } else {
+        _addr = parm_uint_next(&parm);
+    }
+
     unsigned int id = get_free_intcno();
     if (id == MAX_INTCS) {
         error("Maximum INTC count exceeded (%u)", MAX_INTCS);
         return false;
     }
 
+    if (!phys_range(_addr)) {
+        error("Physical memory address out of range");
+        return false;
+    }
+
+    if (!phys_range(_addr + (uint64_t) ((SH2E_INTC_IPR_REGISTERS_COUNT + SH2E_INTC_SYSTEM_REGISTERS_COUNT) * sizeof(uint16_t)))) {
+        error("Invalid address, registers would exceed the physical "
+              "memory range");
+        return false;
+    }
+
+    ptr36_t addr = _addr;
+
+    if (!ptr36_dword_aligned(addr)) {
+        error("Physical memory address must be 8-byte aligned");
+        return false;
+    }
+
     sh2e_intc_t *sh2e_intc = safe_malloc_t(sh2e_intc_t);
-    sh2e_intc_init(sh2e_intc, id);
+    sh2e_intc_init(sh2e_intc, id, addr);
 
     general_intc_t *generic_intc = safe_malloc_t(general_intc_t);
     *generic_intc = (general_intc_t) {
@@ -66,19 +93,6 @@ dsh2eintc_done(device_t *const dev)
     safe_free(generic_intc);
 }
 
-/** Configure interrupt controller address command. */
-static bool
-dsh2eintc_cmd_configure_register_address(token_t *parm, device_t *const dev)
-{
-    ASSERT(dev != NULL);
-
-    uint32_t addr = ALIGN_DOWN(parm_uint_next(&parm), sizeof(uint32_t));
-
-    sh2e_intc_change_regs_address(get_sh2e_intc(dev), addr);
-
-    return true;
-}
-
 /** Add interrupt source command. */
 static bool
 dsh2eintc_cmd_add_interrupt_source(token_t *parm, device_t *const dev)
@@ -94,6 +108,86 @@ dsh2eintc_cmd_add_interrupt_source(token_t *parm, device_t *const dev)
     return true;
 }
 
+/** Read command implementation
+ *
+ * @param procno Processor number
+ * @param dev  Device pointer
+ * @param addr Address of the read operation
+ * @param val  Pointer to store the read value
+ *
+ * @return Read value
+ *
+ */
+static void dsh2eintc_read16(unsigned int procno, struct device *dev, ptr36_t addr, uint16_t *val)
+{
+    general_intc_t *generic_intc = (general_intc_t *) dev->data;
+    sh2e_intc_t *sh2e_intc = (sh2e_intc_t *) generic_intc->data;
+
+    switch (addr - sh2e_intc->regs_addr) {
+    case SH2E_INTC_IPRA_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRB_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRC_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRD_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRE_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRF_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRG_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRH_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRI_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRJ_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRK_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRL_REGISTER_ADDRESS_OFFSET: {
+        uint8_t index = (addr - sh2e_intc->regs_addr) / sizeof(uint16_t);
+        *val = sh2e_intc_priority_register_read(sh2e_intc, index);
+        break;
+    }
+    case SH2E_INTC_ICR_REGISTER_ADDRESS_OFFSET:
+        *val = sh2e_intc_icr_reg_read(sh2e_intc).value;
+        break;
+    case SH2E_INTC_ISR_REGISTER_ADDRESS_OFFSET:
+        *val = sh2e_intc_isr_reg_read(sh2e_intc).value;
+        break;
+    }
+}
+
+/** Write command implementation
+ *
+ * @param dev  Device pointer
+ * @param addr Address of the write operation
+ * @param val  Value to write
+ *
+ */
+static void dsh2eintc_write16(unsigned int procno, device_t *dev, ptr36_t addr,
+        uint16_t val)
+{
+    general_intc_t *generic_intc = (general_intc_t *) dev->data;
+    sh2e_intc_t *sh2e_intc = (sh2e_intc_t *) generic_intc->data;
+
+    switch (addr - sh2e_intc->regs_addr) {
+    case SH2E_INTC_IPRA_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRB_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRC_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRD_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRE_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRF_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRG_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRH_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRI_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRJ_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRK_REGISTER_ADDRESS_OFFSET:
+    case SH2E_INTC_IPRL_REGISTER_ADDRESS_OFFSET: {
+        uint8_t index = (addr - sh2e_intc->regs_addr) / sizeof(uint16_t);
+        sh2e_intc_priority_register_write(sh2e_intc, index, val);
+        break;
+    }
+    case SH2E_INTC_ICR_REGISTER_ADDRESS_OFFSET:
+        sh2e_intc_icr_reg_write(sh2e_intc, val);
+        break;
+    case SH2E_INTC_ISR_REGISTER_ADDRESS_OFFSET:
+        sh2e_intc_isr_reg_write(sh2e_intc, val);
+        break;
+    }
+}
+
 /*
  * Device commands
  */
@@ -104,7 +198,8 @@ static cmd_t dsh2eintc_cmds[] = {
             DEFAULT,
             "Initialization",
             "Initialization",
-            REQ STR "pname/processor name" END },
+            REQ STR "pname/processor name" NEXT
+                    OPT INT "addr/register block address" END },
     { "help",
             (fcmd_t) dev_generic_help,
             DEFAULT,
@@ -112,13 +207,6 @@ static cmd_t dsh2eintc_cmds[] = {
             "Display this help text",
             "Display this help text",
             OPT STR "cmd/command name" END },
-    { "regaddr",
-            (fcmd_t) dsh2eintc_cmd_configure_register_address,
-            DEFAULT,
-            DEFAULT,
-            "Configure INTC registers addresses",
-            "Configure INTC registers addresses",
-            REQ INT "addr/address" END },
     { "addintsrc",
             (fcmd_t) dsh2eintc_cmd_add_interrupt_source,
             DEFAULT,
@@ -138,6 +226,9 @@ device_type_t dsh2eintc = {
     .name = "dsh2eintc",
     .brief = "Interrupt controller",
     .full = "Interrupt controller device",
+
+    .read16 = dsh2eintc_read16,
+    .write16 = dsh2eintc_write16,
 
     /* Functions */
     .done = dsh2eintc_done,
