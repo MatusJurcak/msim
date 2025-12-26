@@ -882,18 +882,18 @@ sh2e_insn_exec_ldsl_fpul(sh2e_cpu_t * cpu, sh2e_insn_m_t insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
-    uint32_t const addrRn = cpu->cpu_regs.general[insn.rn];
-    uint32_t const addrRm = cpu->cpu_regs.general[insn.rm];
+    uint32_t const addr_rn = cpu->cpu_regs.general[insn.rn];
+    uint32_t const addr_rm = cpu->cpu_regs.general[insn.rm];
 
-    uint32_t valueRn, valueRm;
+    uint32_t value_rn, value_rm;
     sh2e_exception_t cpu_read_ex;
 
-    cpu_read_ex = sh2e_cpu_read_long(cpu, addrRn, &valueRn);
+    cpu_read_ex = sh2e_cpu_read_long(cpu, addr_rn, &value_rn);
     if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
         return cpu_read_ex;
     }
 
-    cpu_read_ex = sh2e_cpu_read_long(cpu, addrRm, &valueRm);
+    cpu_read_ex = sh2e_cpu_read_long(cpu, addr_rm, &value_rm);
     if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
         return cpu_read_ex;
     }
@@ -903,7 +903,7 @@ sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
 
     int64_t mac = (((int64_t) cpu->cpu_regs.mach) << 32) | (int64_t) cpu->cpu_regs.macl;
 
-    int64_t const product = (int64_t) valueRn * (int64_t) valueRm;
+    int64_t const product = (int64_t) value_rn * (int64_t) value_rm;
 
     mac += product;
 
@@ -930,18 +930,18 @@ sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
 
 sh2e_exception_t
 sh2e_insn_exec_macw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
-    uint32_t const addrRn = cpu->cpu_regs.general[insn.rn];
-    uint32_t const addrRm = cpu->cpu_regs.general[insn.rm];
+    uint32_t const addr_rn = cpu->cpu_regs.general[insn.rn];
+    uint32_t const addr_rm = cpu->cpu_regs.general[insn.rm];
 
-    uint32_t valueRn, valueRm;
+    uint32_t value_rn, value_rm;
     sh2e_exception_t cpu_read_ex;
 
-    cpu_read_ex = sh2e_cpu_reads_word(cpu, addrRn, &valueRn);
+    cpu_read_ex = sh2e_cpu_reads_word(cpu, addr_rn, &value_rn);
     if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
         return cpu_read_ex;
     }
 
-    cpu_read_ex = sh2e_cpu_reads_word(cpu, addrRm, &valueRm);
+    cpu_read_ex = sh2e_cpu_reads_word(cpu, addr_rm, &value_rm);
     if (cpu_read_ex != SH2E_EXCEPTION_NONE) {
         return cpu_read_ex;
     }
@@ -949,7 +949,7 @@ sh2e_insn_exec_macw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     cpu->cpu_regs.general[insn.rn] += 2;
     cpu->cpu_regs.general[insn.rm] += 2;
 
-    int32_t const product = (int32_t) valueRn * (int32_t) valueRm;
+    int32_t const product = (int32_t) value_rn * (int32_t) value_rm;
 
     // If the S bit is 0, a 16 × 16 + 64 → 64-bit multiply-and-accumulate operation is performed, and the
     // 64-bit result is stored in the linked MACH and MACL registers.
@@ -1744,7 +1744,7 @@ static ALWAYS_INLINE float
 __qnan(uint16_t const bits) {
     return ({
         float32_bits_t const _qnan = {
-            .sign = 0, .exponent = 0xff, .mantissa = 1 << 21 | bits
+            .sign = 0, .exponent = 0xff, .mantissa = 1 << 22 | bits
         };
         _qnan.fvalue;
     });
