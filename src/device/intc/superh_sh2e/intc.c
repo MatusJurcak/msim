@@ -1,4 +1,15 @@
-
+/*
+ * Copyright (c) 2025 Lubomir Bulej
+ * Copyright (c) 2026 Matus Jurcak
+ *
+ * All rights reserved.
+ *
+ * Distributed under the terms of GPL.
+ *
+ *
+ * Hitachi/Renesas SuperH SH-2E microprocessor device (32-bit, FPU).
+ *
+ */
 
 #include "intc.h"
 

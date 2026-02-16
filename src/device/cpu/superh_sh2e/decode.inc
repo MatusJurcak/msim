@@ -1,5 +1,6 @@
 /*
- * Copyright (c) X-Y Z
+ * Copyright (c) 2025 Lubomir Bulej
+ * 
  * All rights reserved.
  *
  * Distributed under the terms of GPL.

@@ -95,7 +95,7 @@ distclean: clean
 -include $(DEPEND)
 
 $(TARGET): $(OBJECTS) $(DEPEND)
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS) -L/opt/homebrew/opt/readline/lib $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LIBS)
 
 %.o: %.c $(DEPEND)
 	$(CC) -c $(CFLAGS) -o $@ $<
