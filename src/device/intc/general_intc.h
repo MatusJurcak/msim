@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2025 Lubomir Bulej
+ * Copyright (c) 2026 Matus Jurcak
+ *
+ * All rights reserved.
+ *
+ * Distributed under the terms of GPL.
+ *
+ *
+ * General interface for interrupt controller devices.
+ *
+ */
 
 #ifndef GENERAL_INTC_H_
 #define GENERAL_INTC_H_

@@ -1,5 +1,7 @@
 /*
- * Copyright (c) X-Y Z
+ * Copyright (c) 2025 Lubomir Bulej
+ * Copyright (c) 2026 Matus Jurcak
+ *
  * All rights reserved.
  *
  * Distributed under the terms of GPL.
