@@ -905,7 +905,7 @@ sh2e_insn_exec_macl(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
 
     int64_t mac = (((int64_t) cpu->cpu_regs.mach) << 32) | (int64_t) cpu->cpu_regs.macl;
 
-    int64_t const product = (int64_t) value_rn * (int64_t) value_rm;
+    int64_t const product = (int64_t) (int32_t) value_rn * (int64_t) (int32_t) value_rm;
 
     mac += product;
 
@@ -1578,7 +1578,7 @@ sh2e_insn_exec_subv(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) 
     uint32_t const rn_sign = bit_value_msb(rn);
     uint32_t const rm_sign = bit_value_msb(rm);
     uint32_t const result_sign = bit_value_msb(result);
-    cpu->cpu_regs.sr.t = ((rn_sign != rm_sign) && (rm_sign != result_sign)) ? 1 : 0;
+    cpu->cpu_regs.sr.t = ((rn_sign != rm_sign) && (rn_sign != result_sign)) ? 1 : 0;
     return SH2E_EXCEPTION_NONE;
 }
 
