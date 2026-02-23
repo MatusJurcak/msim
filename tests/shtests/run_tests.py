@@ -66,7 +66,21 @@ TESTS = [
     "logic_ops/tas_b",
     "logic_ops/tst",
     "logic_ops/tst_b",
-    "logic_ops/tst_imm",    
+    "logic_ops/tst_imm",  
+    "shifts/rotcl",
+    "shifts/rotcr",
+    "shifts/rotl",
+    "shifts/rotr",
+    "shifts/shal",
+    "shifts/shar",
+    "shifts/shll",
+    "shifts/shll2",
+    "shifts/shll8",
+    "shifts/shll16",
+    "shifts/shlr",
+    "shifts/shlr2",
+    "shifts/shlr8",
+    "shifts/shlr16",
 ]
 
 MSIM_PATH = "../../msim"
