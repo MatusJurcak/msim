@@ -53,6 +53,20 @@ TESTS = [
     "arithmetics/subc_with_underflow",
     "arithmetics/subv_no_underflow",
     "arithmetics/subv_with_underflow",
+    "logic_ops/and",
+    "logic_ops/and_b",
+    "logic_ops/and_imm",
+    "logic_ops/not",
+    "logic_ops/or",
+    "logic_ops/or_b",
+    "logic_ops/or_imm",
+    "logic_ops/xor",
+    "logic_ops/xor_b",
+    "logic_ops/xor_imm",
+    "logic_ops/tas_b",
+    "logic_ops/tst",
+    "logic_ops/tst_b",
+    "logic_ops/tst_imm",    
 ]
 
 MSIM_PATH = "../../msim"
