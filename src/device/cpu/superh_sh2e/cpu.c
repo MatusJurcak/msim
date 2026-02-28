@@ -616,7 +616,10 @@ sh2e_program_execution_state_step(sh2e_cpu_t * const restrict cpu) {
         switch (cpu->br_state) {
         case SH2E_BRANCH_STATE_DELAY: // Delay branch instruction.
             cpu->br_state = SH2E_BRANCH_STATE_EXECUTE;
-            // Fall-through.
+            // We want to leave the value of the jump in the pc_next, so we can use it after the execution of the instruction in the delayed slot.
+            // Therefore, we only advance the PC to the next instruction here.
+            cpu->cpu_regs.pc += sizeof(sh2e_insn_t);
+            break;
         case SH2E_BRANCH_STATE_NONE: // Advance PC to next instruction.
             cpu->cpu_regs.pc = cpu->pc_next;
             cpu->pc_next += sizeof(sh2e_insn_t);
