@@ -338,12 +338,12 @@ typedef enum {
     sh2e_insn_d_ic_bts = 0b10001101,
     sh2e_insn_d_ic_bf = 0b10001011,
     sh2e_insn_d_ic_bfs = 0b10001111,
-    sh2e_insn_d_ic_movblg = 0b11000000,
-    sh2e_insn_d_ic_movwlg = 0b11000001,
-    sh2e_insn_d_ic_movllg = 0b11000010,
-    sh2e_insn_d_ic_movbsg = 0b11000100,
-    sh2e_insn_d_ic_movwsg = 0b11000101,
-    sh2e_insn_d_ic_movlsg = 0b11000110,
+    sh2e_insn_d_ic_movblg = 0b11000100,
+    sh2e_insn_d_ic_movwlg = 0b11000101,
+    sh2e_insn_d_ic_movllg = 0b11000110,
+    sh2e_insn_d_ic_movbsg = 0b11000000,
+    sh2e_insn_d_ic_movwsg = 0b11000001,
+    sh2e_insn_d_ic_movlsg = 0b11000010,
     sh2e_insn_d_ic_mova = 0b11000111,
 } sh2e_insn_d_ic_t;
 
