@@ -1971,7 +1971,7 @@ sh2e_insn_exec_float(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn) 
     sh2e_cpu_clear_cv_cz(cpu);
 
     // No exceptions are raised.
-    cpu->fpu_regs.general[insn.rn] = (float) cpu->fpu_regs.fpul.ivalue;
+    cpu->fpu_regs.general[insn.rn] = (float)(int32_t) cpu->fpu_regs.fpul.ivalue;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -1979,44 +1979,59 @@ sh2e_insn_exec_float(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn) 
 
 sh2e_exception_t
 sh2e_insn_exec_fmac(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn) {
+    // Step 1: FR0 * FRm (FMUL)
     sh2e_cpu_clear_cv_cz(cpu);
     sh2e_fpu_scr_t tmp_fpscr;
 
-    sh2e_insn_nm_t const fmac_fmul_insn = {
-        .ic_h = sh2e_insn_nm_ic_h_fmul,
-        .ic_l = sh2e_insn_nm_ic_l_fmul,
-        // Use FR0 as the first operand
-        .rn = 0,
-        // Use FRm as the second operand
-        .rm = insn.rm,
-    };
+    float32_t const frm = cpu->fpu_regs.general[insn.rm];
+    float32_t const fr0 = cpu->fpu_regs.general[0];
 
-    // Call the FMUL instruction to perform FR0*FRm
-    sh2e_exception_t const fmac_fmul_ex = sh2e_insn_exec_fmul(cpu, fmac_fmul_insn);
+    float32_t result_of_fmul = fr0 * frm;
+    if (isnan(result_of_fmul) && (
+            // Any of FRn and FRm is a signaling NaN.
+            __is_snan(fr0) || __is_snan(frm) ||
+            // Either of FRn or FRm is infinity and the other is zero.
+            (isinf(fr0) && fpclassify(frm) == FP_ZERO) || (fpclassify(fr0) == FP_ZERO && isinf(frm))
+        )) {
+        // FMUL special cases (REJ09B0316-0200, page 193).
+        sh2e_cpu_set_cv_fv(cpu);
+        if (cpu->fpu_regs.fpscr.ev) {
+            return SH2E_EXCEPTION_FPU_OPERATION;
+        }
 
-    if (fmac_fmul_ex != SH2E_EXCEPTION_NONE) {
-        return fmac_fmul_ex;
+        result_of_fmul = __qnan(insn.word);
     }
 
     /* save cause field for FR0*FRm */
     tmp_fpscr = cpu->fpu_regs.fpscr;
 
-    sh2e_insn_nm_t const fmac_fadd_insn = {
-        .ic_h = sh2e_insn_nm_ic_h_fadd,
-        .ic_l = sh2e_insn_nm_ic_l_fadd,
-        // Use FR0 as the first operand
-        .rn = 0,
-        // Use FRn as the second operand
-        .rm = insn.rn,
-    };
+    // Step 2: (FR0 * FRm) + FRn (FADD)
 
-    // Call the FADD instruction to perform (FR0*FRm)+FRn
-    sh2e_exception_t const fmac_fadd_ex = sh2e_insn_exec_fadd(cpu, fmac_fadd_insn);
+    sh2e_cpu_clear_cv_cz(cpu);
+    float32_t const frn = cpu->fpu_regs.general[insn.rn];
+
+    float32_t result_of_fadd = result_of_fmul + frn;
+    if (isnan(result_of_fadd) && (
+            // Any of FRn and (FR0*FRm) is a signaling NaN.
+            __is_snan(frn) || __is_snan(result_of_fmul) ||
+            // Both FRn and (FR0*FRm) are infinite but with different sign.
+            (is_neg_inf(frn) && is_pos_inf(result_of_fmul)) || (is_pos_inf(frn) && is_neg_inf(result_of_fmul))
+        )) {
+        // FADD special cases (REJ09B0316-0200, page 173).
+        sh2e_cpu_set_cv_fv(cpu);
+        if (cpu->fpu_regs.fpscr.ev) {
+            return SH2E_EXCEPTION_FPU_OPERATION;
+        }
+
+        result_of_fadd = __qnan(insn.word);
+    }
+
+    cpu->fpu_regs.general[insn.rn] = result_of_fadd;
 
     /* reflect cause field for F0*FRm*/
     cpu->fpu_regs.fpscr.value |= tmp_fpscr.value;
 
-    return fmac_fadd_ex;
+    return SH2E_EXCEPTION_NONE;
 }
 
 // FMOV (Floating Point Move): Floating Point Instruction
