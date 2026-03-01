@@ -37,6 +37,7 @@
 
 typedef enum {
     SH2E_BRANCH_STATE_NONE = 0,
+    SH2E_BRANCH_STATE_DELAY_NEXT,
     SH2E_BRANCH_STATE_DELAY,
     SH2E_BRANCH_STATE_EXECUTE,
 } sh2e_branch_state_t;

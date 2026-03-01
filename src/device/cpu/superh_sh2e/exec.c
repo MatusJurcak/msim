@@ -86,7 +86,7 @@ sh2e_insn_branch_t_eq(
         // TODO Leave cycle counting to the higher-level function.
         cpu->program_execution_cycles += delayed ? 1 : 2;
         cpu->pc_next = target;
-        cpu->br_state = delayed ? SH2E_BRANCH_STATE_DELAY : SH2E_BRANCH_STATE_EXECUTE;
+        cpu->br_state = delayed ? SH2E_BRANCH_STATE_DELAY_NEXT : SH2E_BRANCH_STATE_EXECUTE;
     }
 
     return SH2E_EXCEPTION_NONE;
@@ -393,14 +393,14 @@ sh2e_insn_exec_bfs(sh2e_cpu_t * const restrict cpu, sh2e_insn_d_t const insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_bra(sh2e_cpu_t * const restrict cpu, sh2e_insn_d12_t const insn) {
-    uint32_t const disp = sign_extend_12_32(insn.d12);
-    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
-
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    uint32_t const disp = sign_extend_12_32(insn.d12);
+    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
+
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -413,7 +413,7 @@ sh2e_insn_exec_braf(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
     }
 
     cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2) + cpu->cpu_regs.general[insn.rm];
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -421,15 +421,15 @@ sh2e_insn_exec_braf(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_bsr(sh2e_cpu_t * const restrict cpu, sh2e_insn_d12_t const insn) {
-    uint32_t const disp = sign_extend_12_32(insn.d12);
-    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
-    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
-
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    uint32_t const disp = sign_extend_12_32(insn.d12);
+    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
+    cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2 + disp);
+
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -443,7 +443,7 @@ sh2e_insn_exec_bsrf(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
 
     cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
     cpu->pc_next = sh2e_addr_pc_relative_insn(cpu, 2) + cpu->cpu_regs.general[insn.rm];
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -681,13 +681,13 @@ sh2e_insn_exec_extuw(sh2e_cpu_t * const restrict cpu, sh2e_insn_nm_t const insn)
 
 sh2e_exception_t
 sh2e_insn_exec_jmp(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
-    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
 
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -695,14 +695,15 @@ sh2e_insn_exec_jmp(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
 
 sh2e_exception_t
 sh2e_insn_exec_jsr(sh2e_cpu_t * const restrict cpu, sh2e_insn_m_t const insn) {
-    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
-    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
 
     if (cpu->br_state == SH2E_BRANCH_STATE_DELAY) {
         return SH2E_EXCEPTION_ILLEGAL_SLOT_INSTRUCTION;
     }
 
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    cpu->cpu_regs.pr = sh2e_addr_pc_relative_insn(cpu, 2);
+    cpu->pc_next = cpu->cpu_regs.general[insn.rm];
+
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -1337,7 +1338,7 @@ sh2e_insn_exec_rte(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
     sh2e_cpu_set_sr(cpu, stack_sr & 0x0FFF0FFF);
     cpu->pc_next = stack_pc;
 
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -1359,7 +1360,7 @@ sh2e_insn_exec_rts(sh2e_cpu_t * const restrict cpu, sh2e_insn_z_t const insn) {
     // makes a bit more sense, why should PR point at the jump instruction?).
     //
     cpu->pc_next = cpu->cpu_regs.pr;
-    cpu->br_state = SH2E_BRANCH_STATE_DELAY;
+    cpu->br_state = SH2E_BRANCH_STATE_DELAY_NEXT;
     return SH2E_EXCEPTION_NONE;
 }
 
@@ -1971,7 +1972,7 @@ sh2e_insn_exec_float(sh2e_cpu_t * const restrict cpu, sh2e_insn_n_t const insn) 
     sh2e_cpu_clear_cv_cz(cpu);
 
     // No exceptions are raised.
-    cpu->fpu_regs.general[insn.rn] = (float)(int32_t) cpu->fpu_regs.fpul.ivalue;
+    cpu->fpu_regs.general[insn.rn] = (float) (int32_t) cpu->fpu_regs.fpul.ivalue;
     return SH2E_EXCEPTION_NONE;
 }
 
