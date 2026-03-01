@@ -614,25 +614,28 @@ sh2e_program_execution_state_step(sh2e_cpu_t * const restrict cpu) {
     // Update program counter (respect delay slots).
     if (cpu->pr_state == SH2E_PSTATE_PROGRAM_EXECUTION) {
         switch (cpu->br_state) {
-        case SH2E_BRANCH_STATE_DELAY: // Delay branch instruction.
-            cpu->br_state = SH2E_BRANCH_STATE_EXECUTE;
+        case SH2E_BRANCH_STATE_DELAY_NEXT: { // Just executed a branch instruction, we change the state to delay and advance the PC to the next instruction, but we keep the jump address in pc_next for the delayed slot instruction.
+            cpu->br_state = SH2E_BRANCH_STATE_DELAY;
             // We want to leave the value of the jump in the pc_next, so we can use it after the execution of the instruction in the delayed slot.
             // Therefore, we only advance the PC to the next instruction here.
             cpu->cpu_regs.pc += sizeof(sh2e_insn_t);
             break;
-        case SH2E_BRANCH_STATE_NONE: // Advance PC to next instruction.
+        }
+        case SH2E_BRANCH_STATE_NONE: { // Advance PC to next instruction.
             cpu->cpu_regs.pc = cpu->pc_next;
             cpu->pc_next += sizeof(sh2e_insn_t);
             break;
-
-        case SH2E_BRANCH_STATE_EXECUTE: // Execute delayed branch.
+        }
+        case SH2E_BRANCH_STATE_DELAY: // Delay branch instruction.
+        case SH2E_BRANCH_STATE_EXECUTE: { // Execute delayed branch.
             cpu->cpu_regs.pc = cpu->pc_next;
             cpu->pc_next += sizeof(sh2e_insn_t);
             cpu->br_state = SH2E_BRANCH_STATE_NONE;
             break;
-
-        default:
+        }
+        default: {
             ASSERT(false && "invalid CPU branch state");
+        }
         }
     }
 }
