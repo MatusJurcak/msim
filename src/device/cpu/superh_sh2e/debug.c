@@ -23,6 +23,7 @@
 #include "../../intc/superh_sh2e/intc.h"
 
 #include <inttypes.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -251,9 +252,17 @@ sh2e_cpu_dump_fpu_regs(sh2e_cpu_t const * const restrict cpu) {
     }
 
     // System registers.
+
+    // Kind of hack here in order to not print the sign in front of the NAN value
+    float fpul_fvalue = isnan(cpu->fpu_regs.fpul.fvalue)
+        ? NAN
+        : cpu->fpu_regs.fpul.fvalue;
+    char const * format = isnan(fpul_fvalue)
+        ? " %5s: %-12g %5s: %-8x     %5s: %-8x\n"
+        : " %5s: %-+12g %5s: %-8x     %5s: %-8x\n";
     printf(
-        " %5s: %-+12g %5s: %-8x     %5s: %-8x\n",
-        sh2e_fp_system_reg_names[0], cpu->fpu_regs.fpul.fvalue,
+        format,
+        sh2e_fp_system_reg_names[0], fpul_fvalue,
         sh2e_fp_system_reg_names[0], cpu->fpu_regs.fpul.ivalue,
         sh2e_fp_system_reg_names[1], cpu->fpu_regs.fpscr.value
         // TODO Show FPSCR bits.
