@@ -14,37 +14,32 @@
 #ifndef SUPERH_SH2E_MEMOPS_H_
 #define SUPERH_SH2E_MEMOPS_H_
 
-#include "bitops.h"
+#include <stdint.h>
 
 #include "../../../arch/endianness.h"
 #include "../../../physmem.h"
-
-#include <stdint.h>
-
+#include "bitops.h"
 
 static inline uint8_t
 sh2e_physmem_read8(
-    unsigned int const cpu_id, uint32_t const addr, bool const protected
-) {
+        unsigned int const cpu_id, uint32_t const addr, bool const protected)
+{
     return physmem_read8(cpu_id, addr, protected);
 }
 
-
 static inline uint16_t
 sh2e_physmem_read16(
-    unsigned int const cpu_id, uint32_t const addr, bool const protected
-) {
+        unsigned int const cpu_id, uint32_t const addr, bool const protected)
+{
     return be16toh(physmem_read16(cpu_id, addr, protected));
 }
 
-
 static inline uint32_t
 sh2e_physmem_read32(
-    unsigned int const cpu_id, uint32_t const addr, bool const protected
-) {
+        unsigned int const cpu_id, uint32_t const addr, bool const protected)
+{
     return be32toh(physmem_read32(cpu_id, addr, protected));
 }
-
 
 /**
  * @brief Reads an 8-bit value (byte) from memory, zero-extends it
@@ -57,16 +52,15 @@ sh2e_physmem_read32(
  */
 static inline sh2e_exception_t
 sh2e_cpu_readz_byte(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr,
+        uint32_t *const restrict output_value)
+{
     ASSERT(cpu != NULL);
     ASSERT(output_value != NULL);
 
     *output_value = sh2e_physmem_read8(cpu->id, addr, true);
     return SH2E_EXCEPTION_NONE;
 }
-
 
 /**
  * @brief Reads an 8-bit value (byte) from memory, sign-extends it
@@ -79,16 +73,15 @@ sh2e_cpu_readz_byte(
  */
 static inline sh2e_exception_t
 sh2e_cpu_reads_byte(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr,
+        uint32_t *const restrict output_value)
+{
     ASSERT(cpu != NULL);
     ASSERT(output_value != NULL);
 
     *output_value = sign_extend_8_32(sh2e_physmem_read8(cpu->id, addr, true));
     return SH2E_EXCEPTION_NONE;
 }
-
 
 /**
  * @brief Reads a 16-bit value (word) from memory, zero-extends it
@@ -101,9 +94,9 @@ sh2e_cpu_reads_byte(
  */
 static inline sh2e_exception_t
 sh2e_cpu_readz_word(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr,
+        uint32_t *const restrict output_value)
+{
     ASSERT(cpu != NULL);
     ASSERT(output_value != NULL);
 
@@ -116,7 +109,6 @@ sh2e_cpu_readz_word(
     return SH2E_EXCEPTION_NONE;
 }
 
-
 /**
  * @brief Reads a 16-bit value (word) from memory, sign-extends it
  * to 32 bits, and stores it into `output_value`.
@@ -128,9 +120,9 @@ sh2e_cpu_readz_word(
  */
 static inline sh2e_exception_t
 sh2e_cpu_reads_word(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr,
+        uint32_t *const restrict output_value)
+{
     ASSERT(cpu != NULL);
     ASSERT(output_value != NULL);
 
@@ -143,7 +135,6 @@ sh2e_cpu_reads_word(
     return SH2E_EXCEPTION_NONE;
 }
 
-
 /**
  * @brief Reads a long word (32 bits) from memory.
  *
@@ -154,9 +145,9 @@ sh2e_cpu_reads_word(
  */
 static inline sh2e_exception_t
 sh2e_cpu_read_long(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    uint32_t * const restrict output_value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr,
+        uint32_t *const restrict output_value)
+{
     ASSERT(cpu != NULL);
     ASSERT(output_value != NULL);
 
@@ -169,7 +160,6 @@ sh2e_cpu_read_long(
     return SH2E_EXCEPTION_NONE;
 }
 
-
 /**
  * @brief Reads a float (32 bits) from memory.
  *
@@ -180,9 +170,9 @@ sh2e_cpu_read_long(
  */
 static inline sh2e_exception_t
 sh2e_cpu_read_float(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr,
-    float32_t * const output_value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr,
+        float32_t *const output_value)
+{
     ASSERT(cpu != NULL);
     ASSERT(output_value != NULL);
 
@@ -191,29 +181,27 @@ sh2e_cpu_read_float(
         return SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
     }
 
-    uint32_t * const output_uint32 = (uint32_t *) output_value;
+    uint32_t *const output_uint32 = (uint32_t *) output_value;
     *output_uint32 = sh2e_physmem_read32(cpu->id, addr, true);
     return SH2E_EXCEPTION_NONE;
 }
 
-
 /** @brief Writes a byte value (8 bits) to memory. */
 static inline sh2e_exception_t
 sh2e_cpu_write_byte(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, uint32_t const value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr, uint32_t const value)
+{
     ASSERT(cpu != NULL);
 
     bool success = physmem_write8(cpu->id, addr, value, true);
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
 
-
 /** @brief Writes a word value (16 bits) to memory. */
 static inline sh2e_exception_t
 sh2e_cpu_write_word(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, uint32_t const value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr, uint32_t const value)
+{
     ASSERT(cpu != NULL);
 
     // Check alignment (must be even address).
@@ -225,12 +213,11 @@ sh2e_cpu_write_word(
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
 
-
 /** @brief Writes a long value (32 bits) to memory. */
 static inline sh2e_exception_t
 sh2e_cpu_write_long(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, uint32_t const value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr, uint32_t const value)
+{
     ASSERT(cpu != NULL);
 
     // Check alignment (must be multiple of 4)
@@ -242,12 +229,11 @@ sh2e_cpu_write_long(
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
 
-
 /** @brief Writes a float value (32 bits) to memory. */
 static inline sh2e_exception_t
 sh2e_cpu_write_float(
-    sh2e_cpu_t const * const restrict cpu, uint32_t const addr, float32_t const value
-) {
+        sh2e_cpu_t const *const restrict cpu, uint32_t const addr, float32_t const value)
+{
     ASSERT(cpu != NULL);
 
     // Check alignment (must be multiple of 4)
@@ -259,6 +245,5 @@ sh2e_cpu_write_float(
     bool success = physmem_write32(cpu->id, addr, htobe32(conv.ivalue), true);
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
-
 
 #endif // SUPERH_SH2E_MEMOPS_H_

@@ -14,18 +14,17 @@
 #ifndef SUPERH_SH2E_CPU_H_
 #define SUPERH_SH2E_CPU_H_
 
-#include "insn.h"
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #include "../../../assert.h"
 #include "../../../list.h"
 #include "../../../physmem.h"
 #include "../../../utils.h"
 #include "../../intc/general_intc.h"
-
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <unistd.h>
+#include "insn.h"
 
 #define PACKED __attribute__((packed))
 
@@ -61,7 +60,6 @@ typedef union {
     } PACKED;
 } float32_bits_t;
 
-
 typedef enum sh2e_processing_state {
     SH2E_PSTATE_RESET,
     SH2E_PSTATE_EXCEPTION_PROCESSING,
@@ -70,7 +68,6 @@ typedef enum sh2e_processing_state {
     SH2E_PSTATE_POWER_DOWN,
     __SH2E_PSTATE_COUNT,
 } sh2e_processing_state_t;
-
 
 struct frame;
 
@@ -100,7 +97,6 @@ typedef union sh2e_cpu_sr {
 
 _Static_assert(sizeof(sh2e_cpu_sr_t) == sizeof(uint32_t), "invalid sh2e_cpu_sr_t size!");
 
-
 typedef struct sh2e_cpu_regs {
     /* General registers. */
 
@@ -126,7 +122,6 @@ typedef struct sh2e_cpu_regs {
             uint32_t sp;
         };
     };
-
 
     /* Control registers. */
 
@@ -155,7 +150,6 @@ typedef struct sh2e_cpu_regs {
         };
     };
 
-
     /* System registers. */
 
     union {
@@ -180,7 +174,6 @@ typedef struct sh2e_cpu_regs {
         };
     };
 } sh2e_cpu_regs_t;
-
 
 typedef union sh2e_fpu_scr {
     uint32_t value;
@@ -244,7 +237,6 @@ typedef union sh2e_fpu_scr {
 
 _Static_assert(sizeof(sh2e_fpu_scr_t) == sizeof(uint32_t), "invalid sh2e_fpu_scr_t size!");
 
-
 typedef float32_bits_t sh2e_fpu_ul_t;
 _Static_assert(sizeof(sh2e_fpu_ul_t) == sizeof(uint32_t), "invalid sh2e_fpu_ul_t size!");
 
@@ -304,7 +296,6 @@ typedef struct sh2e_fpu_regs {
 
 } sh2e_fpu_regs_t;
 
-
 /** Exception codes. */
 typedef enum sh2e_exception {
     SH2E_EXCEPTION_CPU_ADDRESS_ERROR,
@@ -348,7 +339,7 @@ typedef struct sh2e_cpu {
     uint_fast64_t power_down_cycles;
 
     /** Interrupt Controller */
-    general_intc_t * intc;
+    general_intc_t *intc;
 
     /** Flags for exceptions/interrupts */
     bool disable_interrupts; /** Flag used for disabled interrupts instructions. */
@@ -366,20 +357,16 @@ typedef struct sh2e_cpu {
 } sh2e_cpu_t;
 
 /** Instruction implementation. */
-typedef sh2e_exception_t (*sh2e_insn_exec_fn_t)(sh2e_cpu_t * cpu, sh2e_insn_t insn);
-
+typedef sh2e_exception_t (*sh2e_insn_exec_fn_t)(sh2e_cpu_t *cpu, sh2e_insn_t insn);
 
 /** Memory read implementation. */
-typedef sh2e_exception_t (*sh2e_cpu_read_fn_t)(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t * output_value);
-
+typedef sh2e_exception_t (*sh2e_cpu_read_fn_t)(sh2e_cpu_t const *cpu, uint32_t addr, uint32_t *output_value);
 
 /** Memory write implementation. */
-typedef sh2e_exception_t (*sh2e_cpu_write_fn_t)(sh2e_cpu_t const * cpu, uint32_t addr, uint32_t value);
-
+typedef sh2e_exception_t (*sh2e_cpu_write_fn_t)(sh2e_cpu_t const *cpu, uint32_t addr, uint32_t value);
 
 /** Operand extension implementation. */
 typedef uint32_t (*sh2e_extend_fn_t)(uint_fast32_t value);
-
 
 /* Exception processing Vector Area */
 
@@ -437,20 +424,18 @@ typedef struct sh2e_eva {
 
 _Static_assert(sizeof(sh2e_eva_t) == SH2E_EVA_VECTOR_COUNT * sizeof(uint32_t), "invalid sh2e_epv_area_t size!");
 
-
 /** Basic CPU routines */
-extern void sh2e_cpu_init(sh2e_cpu_t * cpu, unsigned int id);
-extern void sh2e_cpu_done(sh2e_cpu_t * cpu);
-extern void sh2e_cpu_step(sh2e_cpu_t * cpu);
-extern void sh2e_cpu_goto(sh2e_cpu_t * cpu, ptr64_t addr);
-
+extern void sh2e_cpu_init(sh2e_cpu_t *cpu, unsigned int id);
+extern void sh2e_cpu_done(sh2e_cpu_t *cpu);
+extern void sh2e_cpu_step(sh2e_cpu_t *cpu);
+extern void sh2e_cpu_goto(sh2e_cpu_t *cpu, ptr64_t addr);
 
 /** Memory operations */
-extern bool sh2e_cpu_convert_addr(sh2e_cpu_t const * cpu, ptr64_t virt, ptr36_t * phys, bool write);
-extern sh2e_exception_t sh2e_cpu_fetch_insn(sh2e_cpu_t const * cpu, uint32_t addr, sh2e_insn_t * output_insn);
+extern bool sh2e_cpu_convert_addr(sh2e_cpu_t const *cpu, ptr64_t virt, ptr36_t *phys, bool write);
+extern sh2e_exception_t sh2e_cpu_fetch_insn(sh2e_cpu_t const *cpu, uint32_t addr, sh2e_insn_t *output_insn);
 
 /** Interrupts */
-extern void sh2e_cpu_assert_interrupt(sh2e_cpu_t * cpu, unsigned int num);
-extern void sh2e_cpu_deassert_interrupt(sh2e_cpu_t * cpu, unsigned int num);
+extern void sh2e_cpu_assert_interrupt(sh2e_cpu_t *cpu, unsigned int num);
+extern void sh2e_cpu_deassert_interrupt(sh2e_cpu_t *cpu, unsigned int num);
 
 #endif // SUPERH_SH2E_CPU_H_

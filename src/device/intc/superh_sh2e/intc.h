@@ -9,7 +9,6 @@
  *
  */
 
-
 #ifndef SUPERH_SH2E_INTC_H_
 #define SUPERH_SH2E_INTC_H_
 
@@ -57,7 +56,6 @@
 
 #define SH2E_INTC_VALID_SOURCE_ID(id) \
     (SH2E_INTC_VALID_RESET_ID(id) || (id == SH2E_INTC_HUDI_VECTOR_ADDRESS_OFFSET) || (id == SH2E_INTC_UBC_VECTOR_ADDRESS_OFFSET) || SH2E_INTC_VALID_IRQ_SOURCE_ID(id) || SH2E_INTC_VALID_OTHER_SOURCE_ID(id))
-
 
 /** Struct for Interrupt Control Register (ICR) */
 typedef union sh2e_intc_icr {
@@ -136,7 +134,6 @@ typedef struct sh2e_intc_regs {
         };
     };
 
-
 } sh2e_intc_regs_t;
 
 _Static_assert(sizeof(sh2e_intc_regs_t) == sizeof(uint16_t) * (SH2E_INTC_IPR_REGISTERS_COUNT + SH2E_INTC_SYSTEM_REGISTERS_COUNT), "invalid sh2e_intc_regs_t size!");
@@ -168,39 +165,38 @@ typedef struct sh2e_intc {
 
 } sh2e_intc_t;
 
+extern void sh2e_intc_init(sh2e_intc_t *intc, unsigned int id, uint64_t regs_addr);
 
-extern void sh2e_intc_init(sh2e_intc_t * intc, unsigned int id, uint64_t regs_addr);
+extern void sh2e_intc_init_regs(sh2e_intc_t *intc);
 
-extern void sh2e_intc_init_regs(sh2e_intc_t * intc);
+extern void sh2e_intc_done(sh2e_intc_t *intc);
 
-extern void sh2e_intc_done(sh2e_intc_t * intc);
+extern bool sh2e_check_pending_interrupts(sh2e_intc_t *intc, uint8_t mask, uint8_t *interrupt_out);
 
-extern bool sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask, uint8_t * interrupt_out);
+extern bool sh2e_check_pending_resets(sh2e_intc_t *intc, uint8_t *reset_out);
 
-extern bool sh2e_check_pending_resets(sh2e_intc_t * intc, uint8_t * reset_out);
+extern void sh2e_accept_interrupt(sh2e_intc_t *intc, uint32_t *new_mask_out);
 
-extern void sh2e_accept_interrupt(sh2e_intc_t * intc, uint32_t * new_mask_out);
+extern void sh2e_accept_reset(sh2e_intc_t *intc);
 
-extern void sh2e_accept_reset(sh2e_intc_t * intc);
+extern void sh2e_intc_add_interrupt_source(sh2e_intc_t *intc, uint8_t source_id, uint8_t priority_pool_index, uint8_t priority);
 
-extern void sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id, uint8_t priority_pool_index, uint8_t priority);
+extern void sh2e_intc_assert_interrupt(sh2e_intc_t *intc, unsigned int num);
 
-extern void sh2e_intc_assert_interrupt(sh2e_intc_t * intc, unsigned int num);
-
-extern void sh2e_intc_deassert_interrupt(sh2e_intc_t * intc, unsigned int num);
+extern void sh2e_intc_deassert_interrupt(sh2e_intc_t *intc, unsigned int num);
 
 // Register read functions
-extern sh2e_intc_icr_t sh2e_intc_icr_reg_read(sh2e_intc_t * intc);
+extern sh2e_intc_icr_t sh2e_intc_icr_reg_read(sh2e_intc_t *intc);
 
-extern sh2e_intc_isr_t sh2e_intc_isr_reg_read(sh2e_intc_t * intc);
+extern sh2e_intc_isr_t sh2e_intc_isr_reg_read(sh2e_intc_t *intc);
 
-extern uint16_t sh2e_intc_priority_register_read(sh2e_intc_t * intc, uint8_t index);
+extern uint16_t sh2e_intc_priority_register_read(sh2e_intc_t *intc, uint8_t index);
 
 // Register write functions
-extern void sh2e_intc_icr_reg_write(sh2e_intc_t * intc, uint16_t value);
+extern void sh2e_intc_icr_reg_write(sh2e_intc_t *intc, uint16_t value);
 
-extern void sh2e_intc_isr_reg_write(sh2e_intc_t * intc, uint16_t value);
+extern void sh2e_intc_isr_reg_write(sh2e_intc_t *intc, uint16_t value);
 
-extern void sh2e_intc_priority_register_write(sh2e_intc_t * intc, uint8_t index, uint16_t value);
+extern void sh2e_intc_priority_register_write(sh2e_intc_t *intc, uint8_t index, uint16_t value);
 
 #endif // SUPERH_SH2E_INTC_H_

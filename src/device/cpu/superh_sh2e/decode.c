@@ -11,11 +11,11 @@
  *
  */
 
+#include <stddef.h>
+
 #include "disasm.h"
 #include "exec.h"
 #include "insn.h"
-
-#include <stddef.h>
 
 static sh2e_insn_desc_t const illegal = {
     .assembly = "<ILLEGAL>",
@@ -28,7 +28,8 @@ static sh2e_insn_desc_t const illegal = {
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
+sh2e_insn_decode_z_format(sh2e_insn_z_t const insn)
+{
     switch (insn.ic) {
     // Table A.25: 0 Format
     //   0b0000000000xxxxxx
@@ -128,7 +129,6 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
     }
 }
 
-
 /****************************************************************************
  * SH-2E `n-format` decoding
  ****************************************************************************/
@@ -136,7 +136,8 @@ sh2e_insn_decode_z_format(sh2e_insn_z_t const insn) {
 #define ic12(ic4, ic8) (((ic4) << 8) | (ic8))
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
+sh2e_insn_decode_n_format(sh2e_insn_n_t const insn)
+{
     uint16_t const ic = ic12(insn.ic_h, insn.ic_l);
     switch (ic) {
     // Table A.26: Direct Register
@@ -543,7 +544,8 @@ sh2e_insn_decode_n_format(sh2e_insn_n_t const insn) {
 //
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
+sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn)
+{
     switch (insn.ic_l) {
     // Table A.30: Floating-Point Instruction
     //   0bxxxx1101
@@ -621,13 +623,13 @@ sh2e_insn_decode_n_format_fpu(sh2e_insn_n_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `m-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
+sh2e_insn_decode_m_format(sh2e_insn_m_t const insn)
+{
     uint16_t const ic = ic12(insn.ic_h, insn.ic_l);
     switch (ic) {
     // Table A.31: Direct Register (Load from Control and System Registers)
@@ -891,7 +893,8 @@ sh2e_insn_decode_m_format(sh2e_insn_m_t const insn) {
 //
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn) {
+sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn)
+{
     switch (insn.ic_l) {
     // Table A.35: Floating-Point Instructions
     case sh2e_insn_m_ic_l_flds: {
@@ -924,7 +927,6 @@ sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `nm-format` decoding
  ****************************************************************************/
@@ -932,7 +934,8 @@ sh2e_insn_decode_m_format_fpu(sh2e_insn_m_t const insn) {
 #define ic8(ic8, ic4) (((ic8) << 4) | (ic4))
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
+sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn)
+{
     uint_fast8_t const ic = ic8(insn.ic_h, insn.ic_l);
     switch (ic) {
     // Table A.36: Direct Register
@@ -1546,7 +1549,8 @@ sh2e_insn_decode_nm_format(sh2e_insn_nm_t const insn) {
 //
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
+sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn)
+{
     switch (insn.ic_l) {
     // Table A.42: Floating Point Instructions
     case sh2e_insn_nm_ic_l_fadd: {
@@ -1711,13 +1715,13 @@ sh2e_insn_decode_nm_format_fpu(sh2e_insn_nm_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `md-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_md_format(sh2e_insn_md_t const insn) {
+sh2e_insn_decode_md_format(sh2e_insn_md_t const insn)
+{
     switch (insn.ic) {
     // Table A.43: Indirect register addressing with displacement
     case sh2e_insn_md_ic_movbl4: {
@@ -1748,13 +1752,13 @@ sh2e_insn_decode_md_format(sh2e_insn_md_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `nd4-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn) {
+sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn)
+{
     switch (insn.ic) {
     // Table A.44: Indirect register addressing with displacement
     case sh2e_insn_nd4_ic_movbs4: {
@@ -1785,13 +1789,13 @@ sh2e_insn_decode_nd4_format(sh2e_insn_nd4_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `nmd-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_nmd_format(sh2e_insn_nmd_t const insn) {
+sh2e_insn_decode_nmd_format(sh2e_insn_nmd_t const insn)
+{
     switch (insn.ic) {
     // Table A.45: Indirect register addressing with displacement
     case sh2e_insn_nmd_ic_movls4: {
@@ -1821,13 +1825,13 @@ sh2e_insn_decode_nmd_format(sh2e_insn_nmd_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `d-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
+sh2e_insn_decode_d_format(sh2e_insn_d_t const insn)
+{
     switch (insn.ic) {
     // Table A.46: Indirect GBR addressing with Displacement
     case sh2e_insn_d_ic_movblg: {
@@ -1968,13 +1972,13 @@ sh2e_insn_decode_d_format(sh2e_insn_d_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `d12-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn) {
+sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn)
+{
     switch (insn.ic) {
     // Table A.49: PC relative addressing
     case sh2e_insn_d12_ic_bra: {
@@ -2007,13 +2011,13 @@ sh2e_insn_decode_d12_format(sh2e_insn_d12_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `nd8-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_nd8_format(sh2e_insn_nd8_t const insn) {
+sh2e_insn_decode_nd8_format(sh2e_insn_nd8_t const insn)
+{
     switch (insn.ic) {
     // Table A.50: PC relative addressing with displacement
     case sh2e_insn_nd8_ic_movwi: {
@@ -2042,13 +2046,13 @@ sh2e_insn_decode_nd8_format(sh2e_insn_nd8_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `i-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
+sh2e_insn_decode_i_format(sh2e_insn_i_t const insn)
+{
     switch (insn.ic) {
     // Table A.51: Indirect Indexed GBR
     case sh2e_insn_i_ic_tstm: {
@@ -2165,13 +2169,13 @@ sh2e_insn_decode_i_format(sh2e_insn_i_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `ni-format` decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_ni_format(sh2e_insn_ni_t const insn) {
+sh2e_insn_decode_ni_format(sh2e_insn_ni_t const insn)
+{
     // Table A.54: Immediate addressing (direct register arithmetic operations and data transfers)
     switch (insn.ic) {
     case sh2e_insn_ni_ic_addi: {
@@ -2200,13 +2204,13 @@ sh2e_insn_decode_ni_format(sh2e_insn_ni_t const insn) {
     return NULL;
 }
 
-
 /****************************************************************************
  * SH-2E `MSIM`-format decoding
  ****************************************************************************/
 
 static sh2e_insn_desc_t const *
-sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
+sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn)
+{
     switch (insn.ic) {
 
     // MSIM specific instruction to halt the machine
@@ -2256,8 +2260,9 @@ sh2e_insn_decode_msim_format(sh2e_insn_z_t const insn) {
  ****************************************************************************/
 
 sh2e_insn_desc_t const *
-sh2e_insn_decode(sh2e_insn_t const insn) {
-    sh2e_insn_desc_t const * desc = NULL;
+sh2e_insn_decode(sh2e_insn_t const insn)
+{
+    sh2e_insn_desc_t const *desc = NULL;
 
     // Decode using the top 4 bits.
     // See Table A.56: Operation Code Map.

@@ -21,7 +21,6 @@
 #define ALWAYS_INLINE inline __attribute__((always_inline))
 #endif
 
-
 /****************************************************************************
  * Sign/zero extensions (variable).
  ****************************************************************************/
@@ -29,11 +28,11 @@
 #define EXTEND_TYPE(dtype, val, bits) \
     (((dtype) ((val) << (8 * sizeof(dtype) - (bits)))) >> (8 * sizeof(dtype) - (bits)))
 
-
 // Generic variants that allow specialization on the bit count.
 
 static ALWAYS_INLINE uint_fast64_t
-__sign_extend(uint_fast64_t const val, unsigned const bits) {
+__sign_extend(uint_fast64_t const val, unsigned const bits)
+{
     if (bits <= 8) {
         return EXTEND_TYPE(int8_t, val, bits);
     } else if (bits <= 16) {
@@ -45,9 +44,9 @@ __sign_extend(uint_fast64_t const val, unsigned const bits) {
     }
 }
 
-
 static ALWAYS_INLINE uint_fast64_t
-__zero_extend(uint_fast64_t const val, unsigned const bits) {
+__zero_extend(uint_fast64_t const val, unsigned const bits)
+{
     if (bits <= 8) {
         return EXTEND_TYPE(uint8_t, val, bits);
     } else if (bits <= 16) {
@@ -59,97 +58,105 @@ __zero_extend(uint_fast64_t const val, unsigned const bits) {
     }
 }
 
-
 // Generic variants not intended for specialization.
 
 static ALWAYS_INLINE uint_fast64_t
-sign_extend(uint_fast64_t const val, unsigned const bits) {
+sign_extend(uint_fast64_t const val, unsigned const bits)
+{
     return EXTEND_TYPE(int_fast64_t, val, bits);
 }
 
 static inline uint_fast64_t
-zero_extend(uint_fast64_t const val, unsigned const bits) {
+zero_extend(uint_fast64_t const val, unsigned const bits)
+{
     return EXTEND_TYPE(uint_fast64_t, val, bits);
 }
-
 
 /****************************************************************************
  * Sign/zero extensions (fixed).
  ****************************************************************************/
 
 static ALWAYS_INLINE uint16_t
-sign_extend_8_16(uint_fast32_t const val) {
+sign_extend_8_16(uint_fast32_t const val)
+{
     return (int8_t) val;
 }
 
 static ALWAYS_INLINE uint32_t
-sign_extend_8_32(uint_fast32_t const val) {
+sign_extend_8_32(uint_fast32_t const val)
+{
     return (int8_t) val;
 }
 
 static ALWAYS_INLINE uint32_t
-sign_extend_12_32(uint_fast32_t const val) {
+sign_extend_12_32(uint_fast32_t const val)
+{
     return EXTEND_TYPE(int16_t, val, 12);
 }
 
 static ALWAYS_INLINE uint32_t
-sign_extend_16_32(uint_fast32_t const val) {
+sign_extend_16_32(uint_fast32_t const val)
+{
     return (int16_t) val;
 }
 
 static ALWAYS_INLINE uint32_t
-sign_extend_32_32(uint_fast32_t const val) {
+sign_extend_32_32(uint_fast32_t const val)
+{
     return (int32_t) val;
 }
 
 //
 
 static ALWAYS_INLINE uint32_t
-zero_extend_4_32(uint_fast32_t const val) {
+zero_extend_4_32(uint_fast32_t const val)
+{
     return EXTEND_TYPE(uint8_t, val, 4);
 }
 
 static ALWAYS_INLINE uint32_t
-zero_extend_8_32(uint_fast32_t const val) {
+zero_extend_8_32(uint_fast32_t const val)
+{
     return (uint8_t) val;
 }
 
 static ALWAYS_INLINE uint32_t
-zero_extend_16_32(uint_fast32_t const val) {
+zero_extend_16_32(uint_fast32_t const val)
+{
     return (uint16_t) val;
 }
-
 
 /****************************************************************************
  * Bit values.
  ****************************************************************************/
 
 static ALWAYS_INLINE uint32_t
-bit_value_msb(uint32_t const value) {
+bit_value_msb(uint32_t const value)
+{
     return value >> (8 * sizeof(uint32_t) - 1);
 }
 
-
 static ALWAYS_INLINE uint32_t
-bit_value_lsb(uint32_t const value) {
+bit_value_lsb(uint32_t const value)
+{
     return value & 1;
 }
-
 
 /****************************************************************************
  * Bit rotations.
  ****************************************************************************/
 
 static ALWAYS_INLINE uint32_t
-rotate_left(uint32_t const value, unsigned const amount) {
+rotate_left(uint32_t const value, unsigned const amount)
+{
     return (value << amount) | (value >> ((8 * sizeof(value)) - amount));
 }
 
 static ALWAYS_INLINE uint32_t
-rotate_right(uint32_t const value, unsigned const amount) {
+rotate_right(uint32_t const value, unsigned const amount)
+{
     return (value << ((8 * sizeof(value)) - amount)) | (value >> amount);
 }
-
 
 /****************************************************************************
  * Miscellaneous
@@ -170,17 +177,20 @@ rotate_right(uint32_t const value, unsigned const amount) {
 #define POWER_OF_TWO(n) (IS_POWER_OF_TWO(n) ? __builtin_ctz(n) : -1)
 
 static ALWAYS_INLINE uint32_t
-get_upper_32_bits_from_64(uint64_t const value) {
+get_upper_32_bits_from_64(uint64_t const value)
+{
     return (uint32_t) (value >> 32);
 }
 
 static ALWAYS_INLINE uint32_t
-get_lower_32_bits_from_64(uint64_t const value) {
+get_lower_32_bits_from_64(uint64_t const value)
+{
     return (uint32_t) (value & 0xFFFFFFFF);
 }
 
 static ALWAYS_INLINE uint64_t
-get_lower_48_bits_from_64(uint64_t const value) {
+get_lower_48_bits_from_64(uint64_t const value)
+{
     return value & 0x0000FFFFFFFFFFFF;
 }
 

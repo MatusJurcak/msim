@@ -11,18 +11,16 @@
  *
  */
 
-
 #ifndef SUPERH_SH2E_INSN_H_
 #define SUPERH_SH2E_INSN_H_
 
-#include "../../../../config.h"
-
 #include <stdint.h>
+
+#include "../../../../config.h"
 
 #ifndef PACKED
 #define PACKED __attribute__((packed))
 #endif
-
 
 /** Helper opcodes */
 typedef enum {
@@ -389,7 +387,6 @@ typedef struct {
 
 _Static_assert(sizeof(sh2e_insn_z_t) == sizeof(uint16_t), "invalid sh2e_insn_z_t size!");
 
-
 // n-format
 //
 // ic_h:ic_l ... instruction code
@@ -418,7 +415,6 @@ typedef union {
 
 _Static_assert(sizeof(sh2e_insn_n_t) == sizeof(uint16_t), "invalid sh2e_insn_n_t size!");
 
-
 // m-format
 //
 // ic_h:ic_l ... instruction code
@@ -443,7 +439,6 @@ typedef struct {
 } PACKED sh2e_insn_m_t;
 
 _Static_assert(sizeof(sh2e_insn_m_t) == sizeof(uint16_t), "invalid sh2e_insn_m_t size!");
-
 
 // nm-format
 //
@@ -476,7 +471,6 @@ typedef union {
 
 _Static_assert(sizeof(sh2e_insn_nm_t) == sizeof(uint16_t), "invalid sh2e_insn_nm_t size!");
 
-
 // md-format
 //
 // ic ... instruction code
@@ -498,7 +492,6 @@ typedef struct {
 } PACKED sh2e_insn_md_t;
 
 _Static_assert(sizeof(sh2e_insn_md_t) == sizeof(uint16_t), "invalid sh2e_insn_md_t size!");
-
 
 // nd4-format
 //
@@ -522,7 +515,6 @@ typedef struct {
 } PACKED sh2e_insn_nd4_t;
 
 _Static_assert(sizeof(sh2e_insn_nd4_t) == sizeof(uint16_t), "invalid sh2e_insn_nd4_t size!");
-
 
 // nmd-format
 //
@@ -549,7 +541,6 @@ typedef struct {
 
 _Static_assert(sizeof(sh2e_insn_nmd_t) == sizeof(uint16_t), "invalid sh2e_insn_nmd_t size!");
 
-
 // d-format
 //
 // ic ... instruction code
@@ -572,7 +563,6 @@ typedef struct {
 
 _Static_assert(sizeof(sh2e_insn_d_t) == sizeof(uint16_t), "invalid sh2e_insn_d_t size!");
 
-
 // d12-format
 //
 // ic  ... instruction code
@@ -591,7 +581,6 @@ typedef struct {
 } PACKED sh2e_insn_d12_t;
 
 _Static_assert(sizeof(sh2e_insn_d12_t) == sizeof(uint16_t), "invalid sh2e_insn_d12_t size!");
-
 
 // nd8-format
 //
@@ -615,7 +604,6 @@ typedef struct {
 
 _Static_assert(sizeof(sh2e_insn_nd8_t) == sizeof(uint16_t), "invalid sh2e_insn_nd8_t size!");
 
-
 // i-format
 //
 // ic ... instruction code
@@ -632,7 +620,6 @@ typedef struct {
 } PACKED sh2e_insn_i_t;
 
 _Static_assert(sizeof(sh2e_insn_i_t) == sizeof(uint16_t), "invalid sh2e_insn_i_t size!");
-
 
 // ni-format
 //
@@ -653,7 +640,6 @@ typedef struct {
 } PACKED sh2e_insn_ni_t;
 
 _Static_assert(sizeof(sh2e_insn_ni_t) == sizeof(uint16_t), "invalid sh2e_insn_ni_t size!");
-
 
 /****************************************************************************
  * SH-2E instruction

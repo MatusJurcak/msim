@@ -14,10 +14,10 @@
 #ifndef GENERAL_INTC_H_
 #define GENERAL_INTC_H_
 
-#include "../../list.h"
-
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "../../list.h"
 
 #define MAX_INTCS 32
 
@@ -52,14 +52,14 @@ typedef struct {
 typedef struct {
     item_t item;
     unsigned int intcno;
-    intc_ops_t const * type;
-    void * data;
+    intc_ops_t const *type;
+    void *data;
 } general_intc_t;
 
 /**
  * @brief Retrieves the general_intc_t structure based on the given cpu id
  */
-extern general_intc_t * get_intc(unsigned int no);
+extern general_intc_t *get_intc(unsigned int no);
 
 /**
  * @brief Returns the lowest unused intc id or MAX_INTCS if none are available
@@ -69,12 +69,12 @@ extern unsigned int get_free_intcno(void);
 /**
  * @brief Adds the INTC to the list of all interrupt controllers
  */
-extern void add_intc(general_intc_t * intc);
+extern void add_intc(general_intc_t *intc);
 
 /**
  * @brief Removes the INTC from the list of all interrupt controllers
  */
-extern void remove_intc(general_intc_t * intc);
+extern void remove_intc(general_intc_t *intc);
 
 /**
  * @brief Raises an interrupt
@@ -82,23 +82,23 @@ extern void remove_intc(general_intc_t * intc);
  * @param intc The INTC on which the interrupt will be raised
  * @param no The interrupt number that will be raised
  */
-extern void intc_interrupt_up(general_intc_t * intc, unsigned int no);
+extern void intc_interrupt_up(general_intc_t *intc, unsigned int no);
 /**
  * @brief Cancels an interrupt
  *
  * @param intc The INTC on which the interrupt will be canceled
  * @param no The interrupt number, that will be canceled
  */
-extern void intc_interrupt_down(general_intc_t * intc, unsigned int no);
+extern void intc_interrupt_down(general_intc_t *intc, unsigned int no);
 
-extern bool intc_check_interrupts(general_intc_t * intc, uint8_t mask, uint8_t * interrupt_out);
+extern bool intc_check_interrupts(general_intc_t *intc, uint8_t mask, uint8_t *interrupt_out);
 
-extern void intc_accept_interrupt(general_intc_t * intc, uint32_t * new_mask_out);
+extern void intc_accept_interrupt(general_intc_t *intc, uint32_t *new_mask_out);
 
-extern bool intc_check_resets(general_intc_t * intc, uint8_t * reset_out);
+extern bool intc_check_resets(general_intc_t *intc, uint8_t *reset_out);
 
-extern void intc_accept_reset(general_intc_t * intc);
+extern void intc_accept_reset(general_intc_t *intc);
 
-extern void intc_init(general_intc_t * intc);
+extern void intc_init(general_intc_t *intc);
 
 #endif // GENERAL_INTC_H_

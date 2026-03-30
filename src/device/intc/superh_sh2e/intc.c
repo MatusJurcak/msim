@@ -11,58 +11,60 @@
  *
  */
 
-#include "intc.h"
+#include <string.h>
 
 #include "../../../arch/endianness.h"
 #include "../../../assert.h"
 #include "../../../physmem.h"
-
-#include <string.h>
+#include "intc.h"
 
 #define address(ptr) (uintptr_t) (ptr)
 
 sh2e_intc_icr_t
-sh2e_intc_icr_reg_read(sh2e_intc_t * intc) {
+sh2e_intc_icr_reg_read(sh2e_intc_t *intc)
+{
     return intc->intc_regs.icr;
 }
 
 sh2e_intc_isr_t
-sh2e_intc_isr_reg_read(sh2e_intc_t * intc) {
+sh2e_intc_isr_reg_read(sh2e_intc_t *intc)
+{
     return intc->intc_regs.isr;
 }
 
-void
-sh2e_intc_icr_reg_write(sh2e_intc_t * intc, uint16_t value) {
+void sh2e_intc_icr_reg_write(sh2e_intc_t *intc, uint16_t value)
+{
     intc->intc_regs.icr.value = value;
 }
 
-void
-sh2e_intc_isr_reg_write(sh2e_intc_t * intc, uint16_t value) {
+void sh2e_intc_isr_reg_write(sh2e_intc_t *intc, uint16_t value)
+{
     intc->intc_regs.isr.value = value;
 }
 
 uint16_t
-sh2e_intc_priority_register_read(sh2e_intc_t * intc, uint8_t index) {
+sh2e_intc_priority_register_read(sh2e_intc_t *intc, uint8_t index)
+{
     ASSERT(index < SH2E_INTC_IPR_REGISTERS_COUNT && "wrong index for priority register");
     return intc->intc_regs.priority[index];
 }
 
-void
-sh2e_intc_priority_register_write(sh2e_intc_t * intc, uint8_t index, uint16_t value) {
+void sh2e_intc_priority_register_write(sh2e_intc_t *intc, uint8_t index, uint16_t value)
+{
     ASSERT(index < SH2E_INTC_IPR_REGISTERS_COUNT && "wrong index for priority register");
     intc->intc_regs.priority[index] = value;
 }
 
-void
-sh2e_intc_init_regs(sh2e_intc_t * intc) {
+void sh2e_intc_init_regs(sh2e_intc_t *intc)
+{
     ASSERT(intc != NULL);
 
     // TODO: if the NMI pin is high the value of ICR should be H'8000
     memset(&intc->intc_regs, 0, sizeof(sh2e_intc_regs_t));
 }
 
-void
-sh2e_intc_init(sh2e_intc_t * intc, unsigned int id, uint64_t regs_addr) {
+void sh2e_intc_init(sh2e_intc_t *intc, unsigned int id, uint64_t regs_addr)
+{
     memset(intc, 0, sizeof(sh2e_intc_t));
 
     intc->id = id;
@@ -72,14 +74,14 @@ sh2e_intc_init(sh2e_intc_t * intc, unsigned int id, uint64_t regs_addr) {
     sh2e_intc_init_regs(intc);
 }
 
-void
-sh2e_intc_done(sh2e_intc_t * intc) {
+void sh2e_intc_done(sh2e_intc_t *intc)
+{
     ASSERT(intc != NULL);
     // Nothing to do here yet
 }
 
-void
-sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id, uint8_t priority_pool_index, uint8_t priority) {
+void sh2e_intc_add_interrupt_source(sh2e_intc_t *intc, uint8_t source_id, uint8_t priority_pool_index, uint8_t priority)
+{
     ASSERT(intc != NULL);
     ASSERT(SH2E_INTC_VALID_SOURCE_ID(source_id) && "Interrupt source ID out of range");
     ASSERT(priority_pool_index < SH2E_INTC_IPR_HALF_BYTES_LENGTH);
@@ -105,7 +107,8 @@ sh2e_intc_add_interrupt_source(sh2e_intc_t * intc, uint8_t source_id, uint8_t pr
 }
 
 static bool
-sh2e_check_nmi_interrupt(sh2e_intc_t * intc) {
+sh2e_check_nmi_interrupt(sh2e_intc_t *intc)
+{
     ASSERT(intc != NULL);
 
     sh2e_intc_icr_t icr = intc->intc_regs.icr;
@@ -122,7 +125,8 @@ sh2e_check_nmi_interrupt(sh2e_intc_t * intc) {
 }
 
 static bool
-sh2e_check_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
+sh2e_check_irq_interrupt(sh2e_intc_t *intc, unsigned int irq_index)
+{
     ASSERT(intc != NULL);
     ASSERT(irq_index < SH2E_INTC_IRQ_NUMBER_OF_SOURCES && "IRQ index out of range");
 
@@ -132,7 +136,8 @@ sh2e_check_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
 }
 
 static void
-sh2e_assert_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
+sh2e_assert_irq_interrupt(sh2e_intc_t *intc, unsigned int irq_index)
+{
     ASSERT(intc != NULL);
     ASSERT(irq_index < SH2E_INTC_IRQ_NUMBER_OF_SOURCES && "IRQ index out of range");
 
@@ -142,7 +147,8 @@ sh2e_assert_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
 }
 
 static void
-sh2e_clear_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
+sh2e_clear_irq_interrupt(sh2e_intc_t *intc, unsigned int irq_index)
+{
     ASSERT(intc != NULL);
     ASSERT(irq_index < SH2E_INTC_IRQ_NUMBER_OF_SOURCES && "IRQ index out of range");
 
@@ -157,9 +163,9 @@ sh2e_clear_irq_interrupt(sh2e_intc_t * intc, unsigned int irq_index) {
     // If the level detection is used, the interrupt request remains set until the IRQ pin is cleared
 }
 
-
 static uint8_t
-sh2e_get_priority(sh2e_intc_t * intc, sh2e_intc_source_t * source) {
+sh2e_get_priority(sh2e_intc_t *intc, sh2e_intc_source_t *source)
+{
     ASSERT(source != NULL);
 
     uint8_t reg_index = source->priority_pool_index / 4;
@@ -171,8 +177,8 @@ sh2e_get_priority(sh2e_intc_t * intc, sh2e_intc_source_t * source) {
     return (intc->intc_regs.priority[reg_index] >> shift) & 0x0F;
 }
 
-bool
-sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask, uint8_t * interrupt_out) {
+bool sh2e_check_pending_interrupts(sh2e_intc_t *intc, uint8_t mask, uint8_t *interrupt_out)
+{
     ASSERT(intc != NULL);
     ASSERT(interrupt_out != NULL);
 
@@ -212,8 +218,8 @@ sh2e_check_pending_interrupts(sh2e_intc_t * intc, uint8_t mask, uint8_t * interr
     return false;
 }
 
-bool
-sh2e_check_pending_resets(sh2e_intc_t * intc, uint8_t * reset_out) {
+bool sh2e_check_pending_resets(sh2e_intc_t *intc, uint8_t *reset_out)
+{
     ASSERT(intc != NULL);
     ASSERT(reset_out != NULL);
 
@@ -238,9 +244,8 @@ sh2e_check_pending_resets(sh2e_intc_t * intc, uint8_t * reset_out) {
     return false;
 }
 
-
-void
-sh2e_accept_interrupt(sh2e_intc_t * intc, uint32_t * new_mask_out) {
+void sh2e_accept_interrupt(sh2e_intc_t *intc, uint32_t *new_mask_out)
+{
     ASSERT(intc != NULL);
 
     uint32_t new_mask = intc->priority_out;
@@ -260,8 +265,8 @@ sh2e_accept_interrupt(sh2e_intc_t * intc, uint32_t * new_mask_out) {
     }
 }
 
-void
-sh2e_accept_reset(sh2e_intc_t * intc) {
+void sh2e_accept_reset(sh2e_intc_t *intc)
+{
     ASSERT(intc != NULL);
 
     // Clear all reset requests
@@ -270,10 +275,9 @@ sh2e_accept_reset(sh2e_intc_t * intc) {
     intc->sources[SH2E_INTC_MANUAL_RESET_OFFSET].pending = false;
 }
 
-
 /** Assert the specified interrupt. */
-void
-sh2e_intc_assert_interrupt(sh2e_intc_t * intc, unsigned int num) {
+void sh2e_intc_assert_interrupt(sh2e_intc_t *intc, unsigned int num)
+{
     ASSERT(intc != NULL);
     ASSERT(SH2E_INTC_VALID_SOURCE_ID(num) && "Interrupt number out of range");
     ASSERT(intc->sources[num].registered && "Interrupt source not registered!");
@@ -287,8 +291,8 @@ sh2e_intc_assert_interrupt(sh2e_intc_t * intc, unsigned int num) {
 }
 
 /** Deassert the specified interrupt */
-void
-sh2e_intc_deassert_interrupt(sh2e_intc_t * intc, unsigned int num) {
+void sh2e_intc_deassert_interrupt(sh2e_intc_t *intc, unsigned int num)
+{
     ASSERT(intc != NULL);
     ASSERT(SH2E_INTC_VALID_SOURCE_ID(num) && "Interrupt number out of range");
     ASSERT(intc->sources[num].registered && "Interrupt source not registered!");
