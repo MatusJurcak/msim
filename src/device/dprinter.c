@@ -28,6 +28,9 @@
 #define REGISTER_CHAR 0 /**< Output character */
 #define REGISTER_LIMIT 4 /**< Size of the register block */
 
+const char *const big_endian_str = "big";
+const char *const little_endian_str = "little";
+
 typedef struct {
     ptr36_t addr; /**< Printer register address */
 
@@ -131,8 +134,8 @@ static bool dprinter_info(token_t *parm, device_t *dev)
 {
     printer_data_t *data = (printer_data_t *) dev->data;
 
-    printf("[address ]\n");
-    printf("%#11" PRIx64 "\n", data->addr);
+    printf("[address  ] [endianness]\n");
+    printf("%#11" PRIx64 " %12s\n", data->addr, data->endianness ? little_endian_str : big_endian_str);
 
     return true;
 }
@@ -174,7 +177,7 @@ static bool dprinter_endian(token_t *parm, device_t *dev)
     printer_data_t *data = (printer_data_t *) dev->data;
     char *endian = parm_str(parm);
 
-    if (strcmp(endian, "big") == 0) {
+    if (strcmp(endian, big_endian_str) == 0) {
         data->endianness = false;
     } else {
         data->endianness = true;

@@ -1,10 +1,13 @@
 
+#include <inttypes.h>
+
 #include "../assert.h"
 #include "../fault.h"
 #include "../utils.h"
 #include "device.h"
 #include "dsh2eintc.h"
 #include "intc/general_intc.h"
+#include "intc/superh_sh2e/debug.h"
 #include "intc/superh_sh2e/intc.h"
 
 #define get_sh2e_intc(dev) ((sh2e_intc_t *) (((general_intc_t *) (dev)->data)->data))
@@ -91,6 +94,32 @@ dsh2eintc_done(device_t *const dev)
     safe_free(sh2e_intc);
 
     safe_free(generic_intc);
+}
+
+/** INTC info command. */
+static bool
+dsh2eintc_cmd_info(token_t *const parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    printf("SH-2E INTC\n");
+    return true;
+}
+
+/** Stat command implementation
+ *
+ */
+static bool dsh2eintc_cmd_stat(token_t *parm, device_t *dev)
+{
+    sh2e_intc_t *intc = get_sh2e_intc(dev);
+
+    printf("[Number of accepted interrupts] [Number of accepted resets    ] [Total accepted               ]\n");
+    printf("%31" PRIu64 " %31" PRIu64 " %31" PRIu64 "\n\n",
+            (uint64_t) intc->accepted_interrupts,
+            (uint64_t) intc->accepted_resets,
+            (uint64_t) intc->accepted_interrupts + (uint64_t) intc->accepted_resets);
+
+    return true;
 }
 
 /** Add interrupt source command. */
@@ -188,6 +217,16 @@ static void dsh2eintc_write16(unsigned int procno, device_t *dev, ptr36_t addr,
     }
 }
 
+/** Dump INTC registers command. */
+static bool
+dsh2eintc_cmd_dump_intc_regs(token_t *parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    sh2e_intc_dump_regs(get_sh2e_intc(dev));
+    return true;
+}
+
 /*
  * Device commands
  */
@@ -198,8 +237,8 @@ static cmd_t dsh2eintc_cmds[] = {
             DEFAULT,
             "Initialization",
             "Initialization",
-            REQ STR "pname/processor name" NEXT
-                    OPT INT "addr/register block address" END },
+            REQ STR "name/intc name" NEXT
+                OPT INT "addr/register block address" END },
     { "help",
             (fcmd_t) dev_generic_help,
             DEFAULT,
@@ -207,6 +246,27 @@ static cmd_t dsh2eintc_cmds[] = {
             "Display this help text",
             "Display this help text",
             OPT STR "cmd/command name" END },
+    { "info",
+            (fcmd_t) dsh2eintc_cmd_info,
+            DEFAULT,
+            DEFAULT,
+            "Display configuration information",
+            "Display configuration information",
+            NOCMD },
+    { "stat",
+            (fcmd_t) dsh2eintc_cmd_stat,
+            DEFAULT,
+            DEFAULT,
+            "Display INTC statistics",
+            "Display INTC statistics",
+            NOCMD },
+    { "rd",
+            (fcmd_t) dsh2eintc_cmd_dump_intc_regs,
+            DEFAULT,
+            DEFAULT,
+            "Dump contents of INTC registers",
+            "Dump contents of INTC registers",
+            NOCMD },
     { "addintsrc",
             (fcmd_t) dsh2eintc_cmd_add_interrupt_source,
             DEFAULT,

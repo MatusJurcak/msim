@@ -68,7 +68,8 @@ void sh2e_intc_init(sh2e_intc_t *intc, unsigned int id, uint64_t regs_addr)
     memset(intc, 0, sizeof(sh2e_intc_t));
 
     intc->id = id;
-
+    intc->accepted_interrupts = 0;
+    intc->accepted_resets = 0;
     intc->regs_addr = regs_addr;
 
     sh2e_intc_init_regs(intc);
@@ -263,6 +264,7 @@ void sh2e_accept_interrupt(sh2e_intc_t *intc, uint32_t *new_mask_out)
     if (new_mask_out != NULL) {
         *new_mask_out = new_mask;
     }
+    intc->accepted_interrupts++;
 }
 
 void sh2e_accept_reset(sh2e_intc_t *intc)
@@ -273,6 +275,8 @@ void sh2e_accept_reset(sh2e_intc_t *intc)
     intc->sources[SH2E_INTC_POWER_ON_RESET_EXTERNAL_OFFSET].pending = false;
     intc->sources[SH2E_INTC_POWER_ON_RESET_INTERNAL_OFFSET].pending = false;
     intc->sources[SH2E_INTC_MANUAL_RESET_OFFSET].pending = false;
+
+    intc->accepted_resets++;
 }
 
 /** Assert the specified interrupt. */

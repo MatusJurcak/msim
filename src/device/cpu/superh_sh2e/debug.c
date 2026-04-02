@@ -21,7 +21,6 @@
 #include "../../../env.h"
 #include "../../../main.h"
 #include "../../../utils.h"
-#include "../../intc/superh_sh2e/intc.h"
 #include "cpu.h"
 #include "debug.h"
 #include "decode.h"
@@ -128,10 +127,22 @@ void sh2e_cpu_dump_insn(
     // Print the output.
 
     printf("%-7s", s_cpu.str);
-    printf("%-10s", s_addr.str);
-    printf("%-6s", s_opcode.str);
+
+    if (iaddr) {
+        printf("%-10s", s_addr.str);
+    }
+
+    if (iopc) {
+        printf("%-6s", s_opcode.str);
+    }
+
     printf("%-40s", s_mnemonics.str);
-    printf("%s\n", s_comments.str);
+    
+    if (icmt) {
+        printf("%s", s_comments.str);
+    }
+
+    printf("\n");
 
     string_done(&s_comments);
     string_done(&s_mnemonics);
