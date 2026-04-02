@@ -160,7 +160,7 @@ typedef struct sh2e_intc {
     uint8_t interrupt_out; /** Interrupt number with the highest priority */
 
     uint32_t priority_out; /** Priority of the interrupt source that could be accepted by the CPU */
-    
+
     uint32_t accepted_interrupts; /** Number of accepted interrupts */
 
     uint32_t accepted_resets; /** Number of accepted resets */

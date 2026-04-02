@@ -264,6 +264,130 @@ Commands
 The command and behavior is virtually identical to ``drvcpu`` but the CPU is
 emulating a 64-bit RISC-V processor.
 
+SuperH SH-2E Processor ``dsh2ecpu``
+-----------------------------------
+
+The ``dsh2ecpu`` device encapsulates a SuperH SH-2E processor.
+
+Initialization parameters: none
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Commands
+^^^^^^^^
+
+``help [cmd]``
+   Display a help text for the specified command or a list of available commands.
+``info``
+   Display the processor configuration
+``md saddr count``
+   Dump specified physical memory block
+``id saddr count``
+   Dump instructions from physical memory location
+``rd``
+   Dump contents of CPU general registers
+``frd``
+   Dump contents of FPU registers
+``goto addr``
+   Go to address
+``assertint intno``
+   Assert an interrupt (the interrupt number needs to be configured in the configuration file)
+``setintc intc_name``
+   Assign the interrupt controller to the CPU
+
+
+Examples
+^^^^^^^^
+
+Example of the ``help`` command:
+
+.. code:: msim
+
+   [msim] sh2e1 help
+   [Command and arguments       ] [Description
+   help [<cmd>]                   Display this help text
+   info                           Display configuration information
+   md <saddr> <size>              Dump specified physical memory block
+   id <saddr> <cnt>               Dump instructions from physical memory location
+   rd                             Dump contents of CPU registers
+   frd                            Dump contents of FPU registers
+   goto <addr>                    Go to address
+   stat                           Display CPU statistics
+   assertint <interrupt_source>   Assert interrupt
+   setintc <intc_device_name>     Set interrupt controller
+   [msim]
+
+Example of the ``info`` command:
+
+.. code:: msim
+
+   [msim] sh2e1 info
+   SH-2E
+   [msim]
+
+Example of the ``stat`` command:
+
+.. code:: msim
+
+   [msim] sh2e1 stat
+   [Total cycles            ] [Program execution cycles] [Power down cycles       ]
+                        11002                      11002                          0
+
+   [msim]
+
+Example of the ``md`` command:
+
+.. code:: msim
+
+   [msim] sh2e1 md 0x400 10
+     0x000400    d001400b 00098200 00000de4 2fe67ff0
+     0x000410    6ef361e3 71d0114e 625361e3 71d0116c
+     0x000420    61e36023 801461e3
+   [msim]
+
+Example of the ``id`` command:
+
+.. code:: text
+
+   [msim] sh2e1 id 0x400 10
+   cpu0   00000400  D001  mov.l   @(0x00000408), r0                    ; [PC + ZE(disp) × 4] → Rn
+   cpu0   00000402  400B  jsr     @r0                                  ; PC + 4 → PR, Rm → PC (delayed)
+   cpu0   00000404  0009  nop                                          ; (no operation)
+   cpu0   00000406  8200  halt                                         ; (halt machine)
+   cpu0   00000408  0000  <ILLEGAL>
+   cpu0   0000040A  0DE4  mov.b   r14, @(r0, r13)                      ; Rm{7:0} → [R0 + Rn]
+   cpu0   0000040C  2FE6  mov.l   r14, @-sp                            ; Rn - 4 → Rn, Rm → [Rn]
+   cpu0   0000040E  7FF0  add     -16, sp                              ; Rn + SE(#imm) → Rn
+   cpu0   00000410  6EF3  mov     sp, r14                              ; Rm → Rn
+   cpu0   00000412  61E3  mov     r14, r1                              ; Rm → Rn
+   [msim]
+
+Example of the ``rd`` command:
+
+.. code:: msim
+
+   [msim] sh2e1 rd
+   processor 0
+       r0:       65    r1: ffff9fc8    r2: 90000000    r3:        0
+       r4:       65    r5:        0    r6:        0    r7:        0
+       r8:        0    r9:        0   r10:        0   r11:        0
+      r12:        0   r13:        0   r14: ffff9fc8    sp: ffff9fc8
+       pc:      48e    pr:      4da  mach:        0  macl:        0
+       sr:       f0   gbr:        0   vbr:        0
+   [msim]
+
+Example of the ``frd`` command:
+
+.. code:: msim
+
+   [msim] sh2e1 frd
+   processor 0
+      fr0: +3.5           fr1: -3.5           fr2: -8.75          fr3: +0
+      fr4: +0             fr5: +0             fr6: +0             fr7: +0
+      fr8: +0             fr9: +0            fr10: +0            fr11: +0
+     fr12: +0            fr13: +0            fr14: +0            fr15: +0
+     fpul: nan           fpul: ffffffff     fpscr: 40001
+   [msim]
+
 
 Read/write memory ``rwm``
 -------------------------
@@ -499,6 +623,8 @@ Commands
    Redirect the output to the file specified.
 ``stdout``
    Redirect the output to the standard output.
+``endian``
+   Change the endianness of the device.
 
 Example
 ^^^^^^^
@@ -509,7 +635,8 @@ Example of the ``info`` command:
 
    [msim] add dprinter printer 0x10000000
    [msim] printer info
-   address:0x01000000
+   [address  ] [endianness]
+    0x10000000       little
    [msim]
 
 Example of the ``stat`` command:
@@ -517,7 +644,19 @@ Example of the ``stat`` command:
 .. code:: msim
 
    [msim] printer stat
-   count:11385
+   [count             ]
+                  11385
+   [msim]
+
+Example of the ``endian`` command:
+
+.. code:: msim
+
+   [msim] add dprinter printer 0x10000000
+   [msim] printer endian big
+   [msim] printer info
+   [address  ] [endianness]
+    0x10000000          big
    [msim]
 
 Example of a simple output implementation in the MIPS code:
@@ -1019,3 +1158,107 @@ Commands
     Print a help on the command specified or a list of available commands.
 ``info``
     Print configuration information (number of columns, number of rows, assigned register address).
+
+
+SuperH SH-2E Interrupt controller ``dsh2eintc``
+------------------------------------------------
+
+The ``dsh2eintc`` device simulates an interrupt controller for the SuperH SH-2E processor based on the `SH-2E SH7055S F-ZTAT Hardware Manual <https://www.renesas.com/en/document/mah/sh-2e-sh7055s-hardware-manual?language=en>`_.
+
+
+Initialization parameters: ``address`` (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``address``
+   Starting physical address of device registers. (default: ``0xFFFFED00``)
+
+Commands
+^^^^^^^^
+
+``help [cmd]``
+   Display a help text for the specified command or a list of available commands.
+
+``info``
+   Display the interrupt controller configuration
+
+``stat``
+   Display interrupt controller statistics.
+
+``rd``
+   Dump contents of interrupt controller registers.
+
+``addintsrc source_id priority_pool_index priority``
+   Add a new interrupt source to the controller. Required parameters are:
+
+   :source_id: interrupt source ID
+   :priority_pool_index: index of the priority pool (0-31)
+   :priority: interrupt priority (0-14)
+
+Examples
+^^^^^^^^
+
+Simple usage example with the SuperH SH-2E CPU:
+
+.. code:: msim
+
+   [msim] add dsh2ecpu cpu0
+   [msim] add dsh2eintc intc0
+   [msim] cpu0 setintc intc0
+
+Example of the ``info`` command:
+
+.. code:: msim
+
+   [msim] intc0 info
+   SH-2E INTC
+
+Example of the ``stat`` command:
+
+.. code:: msim
+
+   [msim] intc0 stat
+   [Number of accepted interrupts] [Number of accepted resets    ] [Total accepted               ]
+                                 0                               1                               1
+
+Example of the ``rd`` command:
+
+.. code:: msim
+
+   [msim] intc0 rd
+   intc 0
+     ipra: e000
+     iprb: 0000
+     iprc: 0000
+     iprd: 0000
+     ipre: 0000
+     iprf: 0000
+     iprg: 0000
+     iprh: 0000
+     ipri: 0000
+     iprj: 0000
+     iprk: 0000
+     iprl: 0000
+      icr:    0
+      isr:    0
+
+Example of the ``addintsrc`` command:
+
+.. code:: msim
+
+   [msim] intc0 addintsrc 190 0 14
+   [msim] intc0 rd
+   intc 0
+     ipra: e000
+     iprb: 0000
+     iprc: 0000
+     iprd: 0000
+     ipre: 0000
+     iprf: 0000
+     iprg: 0000
+     iprh: 0000
+     ipri: 0000
+     iprj: 0000
+     iprk: 0000
+     iprl: 0000
+      icr:    0
+      isr:    0

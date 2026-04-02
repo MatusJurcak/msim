@@ -200,7 +200,7 @@ const env_t global_env[] = {
             vt_uint,
             &__rv_ireg_mock, // unused
             rv32_debug_change_regnames },
-     { "sh2e_ireg",
+    { "sh2e_ireg",
             "SuperH SH-2E Register name mode",
             "Mode 0 (numerical): r0, r15, fr0, fr15, etc.\n"
             "Mode 1 (ABI): r0, sp, fr0, fr15, etc.\n",

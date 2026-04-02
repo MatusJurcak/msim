@@ -238,7 +238,7 @@ static cmd_t dsh2eintc_cmds[] = {
             "Initialization",
             "Initialization",
             REQ STR "name/intc name" NEXT
-                OPT INT "addr/register block address" END },
+                    OPT INT "addr/register block address" END },
     { "help",
             (fcmd_t) dev_generic_help,
             DEFAULT,

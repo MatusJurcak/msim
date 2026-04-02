@@ -137,7 +137,7 @@ void sh2e_cpu_dump_insn(
     }
 
     printf("%-40s", s_mnemonics.str);
-    
+
     if (icmt) {
         printf("%s", s_comments.str);
     }
