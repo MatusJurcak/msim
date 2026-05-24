@@ -1,0 +1,120 @@
+
+main.raw:     file format elf32-sh
+
+
+Disassembly of section .text:
+
+00000000 <start-0x400>:
+	...
+
+00000400 <start>:
+ 400:	40 0e       	ldc	r0,sr
+ 402:	e8 01       	mov	#1,r8
+ 404:	e0 01       	mov	#1,r0
+ 406:	d1 23       	mov.l	494 <source_address_0>,r1	! ffffa000
+ 408:	21 02       	mov.l	r0,@r1
+ 40a:	70 01       	add	#1,r0
+ 40c:	71 04       	add	#4,r1
+ 40e:	21 02       	mov.l	r0,@r1
+ 410:	70 01       	add	#1,r0
+ 412:	71 04       	add	#4,r1
+ 414:	21 02       	mov.l	r0,@r1
+ 416:	70 01       	add	#1,r0
+ 418:	71 04       	add	#4,r1
+ 41a:	21 02       	mov.l	r0,@r1
+ 41c:	d6 20       	mov.l	4a0 <cmt_cmcsr0_address>,r6	! fffff712
+ 41e:	e1 40       	mov	#64,r1
+ 420:	26 11       	mov.w	r1,@r6
+ 422:	da 1c       	mov.l	494 <source_address_0>,r10	! ffffa000
+ 424:	d0 15       	mov.l	47c <dmac_sar0_address>,r0	! ffffecc0
+ 426:	20 a2       	mov.l	r10,@r0
+ 428:	da 1b       	mov.l	498 <destination_address_0>,r10	! ffffb000
+ 42a:	d0 15       	mov.l	480 <dmac_dar0_address>,r0	! ffffecc4
+ 42c:	20 a2       	mov.l	r10,@r0
+ 42e:	e1 04       	mov	#4,r1
+ 430:	d0 14       	mov.l	484 <dmac_dmatcr0_address>,r0	! ffffecc8
+ 432:	20 12       	mov.l	r1,@r0
+ 434:	d1 16       	mov.l	490 <dmac_chcr0_value>,r1	! 11125
+ 436:	d0 14       	mov.l	488 <dmac_chcr0_address>,r0	! ffffeccc
+ 438:	20 12       	mov.l	r1,@r0
+ 43a:	e0 01       	mov	#1,r0
+ 43c:	d1 13       	mov.l	48c <dmac_dmaor_address>,r1	! ffffecb0
+ 43e:	21 01       	mov.w	r0,@r1
+ 440:	d6 16       	mov.l	49c <cmt_cmstr_address>,r6	! fffff710
+ 442:	e1 01       	mov	#1,r1
+ 444:	26 11       	mov.w	r1,@r6
+
+00000446 <main_loop>:
+ 446:	39 82       	cmp/hs	r8,r9
+ 448:	8b fd       	bf	446 <main_loop>
+ 44a:	00 09       	nop	
+ 44c:	d2 0b       	mov.l	47c <dmac_sar0_address>,r2	! ffffecc0
+ 44e:	63 22       	mov.l	@r2,r3
+ 450:	82 01       	.word 0x8201
+ 452:	60 a6       	mov.l	@r10+,r0
+ 454:	82 01       	.word 0x8201
+ 456:	60 a6       	mov.l	@r10+,r0
+ 458:	82 01       	.word 0x8201
+ 45a:	60 a6       	mov.l	@r10+,r0
+ 45c:	82 01       	.word 0x8201
+ 45e:	60 a6       	mov.l	@r10+,r0
+ 460:	82 01       	.word 0x8201
+ 462:	82 00       	.word 0x8200
+
+00000464 <dmac_handler>:
+ 464:	e0 00       	mov	#0,r0
+ 466:	79 01       	add	#1,r9
+ 468:	40 0e       	ldc	r0,sr
+ 46a:	af ec       	bra	446 <main_loop>
+ 46c:	00 09       	nop	
+
+0000046e <dmac_error_handler>:
+ 46e:	e9 02       	mov	#2,r9
+ 470:	af e9       	bra	446 <main_loop>
+ 472:	00 09       	nop	
+
+00000474 <cmt_handler>:
+ 474:	e0 00       	mov	#0,r0
+ 476:	40 0e       	ldc	r0,sr
+ 478:	af e5       	bra	446 <main_loop>
+ 47a:	00 09       	nop	
+
+0000047c <dmac_sar0_address>:
+ 47c:	ff ff       	.word 0xffff
+ 47e:	ec c0       	mov	#-64,r12
+
+00000480 <dmac_dar0_address>:
+ 480:	ff ff       	.word 0xffff
+ 482:	ec c4       	mov	#-60,r12
+
+00000484 <dmac_dmatcr0_address>:
+ 484:	ff ff       	.word 0xffff
+ 486:	ec c8       	mov	#-56,r12
+
+00000488 <dmac_chcr0_address>:
+ 488:	ff ff       	.word 0xffff
+ 48a:	ec cc       	mov	#-52,r12
+
+0000048c <dmac_dmaor_address>:
+ 48c:	ff ff       	.word 0xffff
+ 48e:	ec b0       	mov	#-80,r12
+
+00000490 <dmac_chcr0_value>:
+ 490:	00 01       	.word 0x0001
+ 492:	11 25       	mov.l	r2,@(20,r1)
+
+00000494 <source_address_0>:
+ 494:	ff ff       	.word 0xffff
+ 496:	a0 00       	bra	49a <destination_address_0+0x2>
+
+00000498 <destination_address_0>:
+ 498:	ff ff       	.word 0xffff
+ 49a:	b0 00       	bsr	49e <cmt_cmstr_address+0x2>
+
+0000049c <cmt_cmstr_address>:
+ 49c:	ff ff       	.word 0xffff
+ 49e:	f7 10       	fadd	fr1,fr7
+
+000004a0 <cmt_cmcsr0_address>:
+ 4a0:	ff ff       	.word 0xffff
+ 4a2:	f7 12       	fmul	fr1,fr7

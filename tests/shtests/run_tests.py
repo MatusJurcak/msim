@@ -134,6 +134,7 @@ TESTS = [
     "data_transfer/swap_w",
     "data_transfer/xtrct",
     "dmac/simple",
+    "dmac/with_cmt",
     "exceptions/cpu_address_error",
     "exceptions/fpu_exception",
     "exceptions/illegal_insn",

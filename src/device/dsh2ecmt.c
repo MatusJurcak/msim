@@ -25,7 +25,6 @@
 #include "cpu/general_cpu.h"
 #include "dsh2ecmt.h"
 #include "intc/superh_sh2e/intc.h"
-#include "peripheral.h"
 
 #define SH2E_CMT_CHANNEL_REGISTERS_COUNT 3
 #define SH2E_CMT_REGISTERS_START_ADDRESS UINT32_C(0xFFFFF710)
@@ -563,7 +562,13 @@ static void update_channel_counter(sh2e_cmt_t *cmt, unsigned int channel_num)
 
             if (channel_reg->cmcsr.cmie) { // If interrupt is enabled
                 (*interrupts_count)++;
-                cpu_interrupt_up(cmt->cpu, *int_no);
+
+                // NOTE: an experimantal feature that signals the DMAC instead of the CPU for channel 0
+                if (channel_num == 0 && cmt->dmac_link != NULL) {
+                    cmt->dmac_link->peripheral->type->interrupt_up_from_peripheral(cmt->dmac_link->peripheral, 1);
+                } else {
+                    cpu_interrupt_up(cmt->cpu, *int_no);
+                }
             }
         }
     }
@@ -657,6 +662,30 @@ static bool dsh2ecmt_add_cpu(token_t *parm, device_t *const dev)
     return true;
 }
 
+static bool dsh2ecmt_cmd_add_dmac(token_t *parm, device_t *const dev)
+{
+    ASSERT(dev != NULL);
+
+    const char *peripheral_name = parm_str_next(&parm);
+    device_t *peripheral_dev = dev_by_name(peripheral_name);
+
+    if (peripheral_dev == NULL) {
+        error("Peripheral device '%s' not found", peripheral_name);
+        return false;
+    }
+
+    peripheral_t *peripheral = peripheral_dev->data;
+    sh2e_cmt_t *cmt = device_get_sh2e_cmt(dev);
+
+    peripheral_link_t *peripheral_link = safe_malloc_t(peripheral_link_t);
+    peripheral_link->peripheral = peripheral;
+    item_init(&peripheral_link->item);
+
+    cmt->dmac_link = peripheral_link;
+
+    return true;
+}
+
 /** Dispose dsh2ecmt
  *
  * @param dev Device pointer
@@ -719,6 +748,13 @@ static cmd_t dsh2ecmt_cmds[] = {
             "Add CPU to the device",
             "Add CPU to the device",
             REQ STR "cpu name" END },
+    { "adddmac",
+            (fcmd_t) dsh2ecmt_cmd_add_dmac,
+            DEFAULT,
+            DEFAULT,
+            "Add DMAC reference to the device",
+            "Add DMAC reference to the device",
+            REQ STR "peripheral name" END },
     LAST_CMD
 };
 

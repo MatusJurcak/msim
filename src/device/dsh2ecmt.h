@@ -16,6 +16,7 @@
 
 #include "cpu/general_cpu.h"
 #include "device.h"
+#include "peripheral.h"
 
 extern device_type_t const dsh2ecmt;
 
@@ -126,6 +127,9 @@ typedef struct sh2e_cmt {
 
     uint64_t interrupts_channel_0_count; /* Number of interrupts asserted from channel 0 */
     uint64_t interrupts_channel_1_count; /* Number of interrupts asserted from channel 1 */
+
+    /* Experimental */
+    peripheral_link_t *dmac_link; /* Link to the DMAC peripheral, used for triggering DMAC transfers on compare match interrupts */
 } sh2e_cmt_t;
 
 #endif
