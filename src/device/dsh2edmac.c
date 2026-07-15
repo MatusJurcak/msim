@@ -613,7 +613,7 @@ static void word_transfer(sh2e_dmac_t *dmac, uint32_t const s_addr, uint32_t con
         cpu_interrupt_up(dmac->cpu, SH2E_INTC_DMAC_VECTOR_ADDRESS_OFFSET);
         return;
     }
-    uint32_t data = physmem_read16(-1, s_addr, true);
+    uint16_t data = physmem_read16(-1, s_addr, true);
     physmem_write16(-1, d_addr, data, true);
 }
 

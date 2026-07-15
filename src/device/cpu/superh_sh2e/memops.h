@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "../../../arch/endianness.h"
+#include "../../../endian.h"
 #include "../../../main.h"
 #include "../../../physmem.h"
 #include "bitops.h"
@@ -32,14 +33,18 @@ static inline uint16_t
 sh2e_physmem_read16(
         unsigned int const cpu_id, uint32_t const addr, bool const protected)
 {
-    return be16toh(physmem_read16(cpu_id, addr, protected));
+    // TODO: remove the double conversion (swapping bytes on big-endian machines)
+    // by refactoring the physmem module to take into account the device endianness.
+    return be16toh(convert_uint16_t_endian(physmem_read16(cpu_id, addr, protected)));
 }
 
 static inline uint32_t
 sh2e_physmem_read32(
         unsigned int const cpu_id, uint32_t const addr, bool const protected)
 {
-    return be32toh(physmem_read32(cpu_id, addr, protected));
+    // TODO: remove the double conversion (swapping bytes on big-endian machines)
+    // by refactoring the physmem module to take into account the device endianness.
+    return be32toh(convert_uint32_t_endian(physmem_read32(cpu_id, addr, protected)));
 }
 
 /**
@@ -228,7 +233,9 @@ sh2e_cpu_write_word(
         return SH2E_EXCEPTION_NONE;
     }
 
-    bool success = physmem_write16(cpu->id, addr, htobe16(value), true);
+    // TODO: remove the double conversion (swapping bytes on big-endian machines)
+    // by refactoring the physmem module to take into account the device endianness.
+    bool success = physmem_write16(cpu->id, addr, htobe16(convert_uint16_t_endian(value)), true);
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
 
@@ -253,7 +260,9 @@ sh2e_cpu_write_long(
         return SH2E_EXCEPTION_NONE;
     }
 
-    bool success = physmem_write32(cpu->id, addr, htobe32(value), true);
+    // TODO: remove the double conversion (swapping bytes on big-endian machines)
+    // by refactoring the physmem module to take into account the device endianness.
+    bool success = physmem_write32(cpu->id, addr, htobe32(convert_uint32_t_endian(value)), true);
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
 
@@ -278,8 +287,10 @@ sh2e_cpu_write_float(
         return SH2E_EXCEPTION_NONE;
     }
 
+    // TODO: remove the double conversion (swapping bytes on big-endian machines)
+    // by refactoring the physmem module to take into account the device endianness.
     sh2e_fpu_ul_t const conv = { .fvalue = value };
-    bool success = physmem_write32(cpu->id, addr, htobe32(conv.ivalue), true);
+    bool success = physmem_write32(cpu->id, addr, htobe32(convert_uint32_t_endian(conv.ivalue)), true);
     return success ? SH2E_EXCEPTION_NONE : SH2E_EXCEPTION_CPU_ADDRESS_ERROR;
 }
 
